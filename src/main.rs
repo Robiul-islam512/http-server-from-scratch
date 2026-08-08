@@ -4,25 +4,15 @@ use std::io::{Read, Result, Write};
 mod method;
 mod url;
 mod version;
+mod request_line;
+mod request_headers;
 
 use method::Method::Method;
 use url::URL::URL;
 use version::Version;
+use request_line::RequestLine::RequestLine;
+use request_headers::RequestHeaders::RequestHeaders;
 
-
-
-
-#[derive(Debug)]
-struct RequestLine<'a>{
-    method:Method,
-    url:URL<'a>,
-    version:&'a str,
-}
-
-#[derive(Debug)]
-struct RequestHeaders<'a>{
-    header:Vec<&'a str>
-}
 
 #[derive(Debug)]
 struct EntityBody<'a>{
@@ -32,7 +22,7 @@ struct EntityBody<'a>{
 #[derive(Debug)]
 struct RequestFormat<'a>{
     request_line:RequestLine<'a>,
-    header_lines:Vec<RequestHeaders<'a>>,
+    header_lines:RequestHeaders<'a>,
     blank_line:&'a str,
     body:EntityBody<'a>,
 }
@@ -58,13 +48,17 @@ fn main()->Result<()>{
         let mut ind = 0;
 
         for i in 0..buffer.len(){
+            if buffer[i] == 0{
+                break;
+            } 
             if buffer[i] != 13 && buffer[i] !=10{
                 data_str.push(buffer[i] as char);
             }
             if buffer[i] == 13{
                 requested_data.push(data_str);
                 data_str = String::new();
-            }    
+            }
+               
         } 
 
         let mut request_line = requested_data[0].split(" ");
@@ -80,13 +74,23 @@ fn main()->Result<()>{
         let url = URL::new(url_option);
         let version = Version::version(http_version_option);
         
-        let request_line = RequestLine{
-            method,
-            url,
-            version,
+        let request_line = RequestLine::new(method, url, version);
+        let header_lines = RequestHeaders::new(header_lines);
+        let blank_line = "";
+        let body = EntityBody{
+            body:entity_body
+        };
+        let requested_format = RequestFormat{
+            request_line,
+            header_lines,
+            blank_line,
+            body,
         };
 
-        println!("{:?}",request_line);
+
+        // println!("{:?}",request_line.method.method);
+
+        println!("{:?}",requested_format.body.body);
        
     }
     

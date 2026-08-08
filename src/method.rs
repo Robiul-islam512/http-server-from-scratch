@@ -2,7 +2,7 @@
 pub mod Method{
 
     #[derive(Debug)]
-    enum MethodType{
+    pub enum MethodType{
         GET,
         POST,
         PUT,
@@ -13,7 +13,7 @@ pub mod Method{
 
     #[derive(Debug)]
     pub struct Method{
-        method:MethodType
+        pub method:MethodType
     }
 
     impl Method{
@@ -32,20 +32,3 @@ pub mod Method{
         }
     }
 }
-
-
-
-
-// fn method(option:Option<&str>)->Method{
-//     return match option {
-//             Some("GET")=>Method::GET,
-//             Some("POST")=>Method::POST,
-//             Some("PUT")=>Method::PUT,
-//             Some("DELETE")=>Method::DELETE,
-//             Some("HEAD")=>Method::HEAD,
-//             _=>{
-//                 println!("Unsupported Method");
-//                 return Method::NONE;
-//             },
-//     };
-// }
