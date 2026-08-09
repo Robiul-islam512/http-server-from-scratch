@@ -27,31 +27,25 @@ struct RequestFormat<'a>{
     body:EntityBody<'a>,
 }
 
-
-
+// struct Response
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
 
-    let mut buffer = [0;4096];
+    
    
     for stream in litstener.incoming(){
-        
+        let mut buffer = [0;4096];
         let mut stream = stream?;
 
-        let _ = stream.read(&mut buffer);
+        let bytes =  stream.read(&mut buffer)?;
 
         let mut requested_data:Vec<String> = Vec::new();
 
         let mut data_str = String::new();
 
-        let mut ind = 0;
-
-        for i in 0..buffer.len(){
-            if buffer[i] == 0{
-                break;
-            } 
-            if buffer[i] != 13 && buffer[i] !=10{
+        for i in 0..bytes{
+            if buffer[i] != 13 && buffer[i] !=10 && buffer[i]!=58{
                 data_str.push(buffer[i] as char);
             }
             if buffer[i] == 13{
@@ -61,9 +55,12 @@ fn main()->Result<()>{
                
         } 
 
+        println!("{:?}",requested_data);
+
         let mut request_line = requested_data[0].split(" ");
-        let header_lines = &requested_data[1..requested_data.len()-2];
-        let entity_body = &data_str;
+        let header_lines = &requested_data[1..requested_data.len()-1];
+        
+
 
         let method_option = request_line.next();
         let url_option = request_line.next();
@@ -76,9 +73,27 @@ fn main()->Result<()>{
         
         let request_line = RequestLine::new(method, url, version);
         let header_lines = RequestHeaders::new(header_lines);
+
+        let mut entity_body = String::new();
+
+        let body_len = match header_lines.header.get("Content-Length") {
+            Some(val)=> val.parse::<usize>().unwrap_or(0),
+            None=>0,
+        };
+
+        let body_content_start = bytes-body_len; 
+
+        for i in body_content_start..bytes{
+            if buffer[i]!=13 && buffer[i]!=10 && buffer[i]!=34{
+                entity_body.push(buffer[i] as char);
+            }
+            
+        }
+
+
         let blank_line = "";
         let body = EntityBody{
-            body:entity_body
+            body:&entity_body
         };
         let requested_format = RequestFormat{
             request_line,
@@ -90,7 +105,7 @@ fn main()->Result<()>{
 
         // println!("{:?}",request_line.method.method);
 
-        println!("{:?}",requested_format.body.body);
+        println!("{:?}",requested_format);
        
     }
     

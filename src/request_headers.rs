@@ -1,17 +1,23 @@
 pub mod RequestHeaders{
+    use std::collections::HashMap;
+
     #[derive(Debug)]
     pub struct RequestHeaders<'a>{
-        pub header:Vec<&'a str>
+        pub header:HashMap<&'a str,&'a str>
     }
 
     impl<'a> RequestHeaders<'a>{
         pub fn new(headers:&'a[String])->Self{
-            let mut req_headers:Vec<&str> = Vec::new();
+            let mut header:HashMap<&str,&str> = HashMap::new();
 
             for header_line in headers{
-                req_headers.push(header_line);
+                let header_content:Vec<&str> = header_line.split(" ").collect();
+                
+                header.insert(header_content[0], header_content[1]);
+            
             }
-            RequestHeaders { header: req_headers }
+
+            RequestHeaders {  header }
 
         }
     }
