@@ -1,111 +1,103 @@
 use std::net::{TcpListener,TcpStream};
 use std::io::{Read, Result, Write};
+use std::str::Bytes;
+use chrono::{DateTime, Local};
 
-mod method;
-mod url;
-mod version;
-mod request_line;
-mod request_headers;
-
-use method::Method::Method;
-use url::URL::URL;
-use version::Version;
-use request_line::RequestLine::RequestLine;
-use request_headers::RequestHeaders::RequestHeaders;
-
+mod request;
 
 #[derive(Debug)]
-struct EntityBody<'a>{
+enum StatusMessage{
+    Ok,//200
+    BadRequest,//400
+}
+
+// #[derive(Debug)]
+// enum ContentType{
+//     ApplicationJson,
+//     TextHtml,
+//     TextPlain,
+// }
+
+#[derive(Debug)]
+struct ResponseEntityBody<'a>{
     body:&'a str,
 }
 
 #[derive(Debug)]
-struct RequestFormat<'a>{
-    request_line:RequestLine<'a>,
-    header_lines:RequestHeaders<'a>,
-    blank_line:&'a str,
-    body:EntityBody<'a>,
+struct StatusLine{
+    version:String,
+    status_code:u32,
+    message:StatusMessage,
 }
 
-// struct Response
+#[derive(Debug)]
+struct ResponseHeaderLines{
+    connection:String,
+    date:String,
+    content_length:usize,
+    content_type:String,
+}
+
+#[derive(Debug)]
+struct Response<'a>{
+    status_line:StatusLine,
+    header_lines:ResponseHeaderLines,
+    blank_line:&'a str,
+    body:ResponseEntityBody<'a>,
+}
+
+
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
 
     
-   
+//    let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    
+    let status_line = StatusLine{
+        version:String::from("HTTP/1.1"),
+        status_code:200,
+        message:StatusMessage::Ok,
+    };
+
+    let content = "my name is robiul";
+    let mut content_len = 0;
+
+    for ch in content.chars(){
+        content_len+=1;
+    }
+
+    let header_lines = ResponseHeaderLines{
+        connection:String::from("Close"),
+        date:Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+        content_length:content_len,
+        content_type:String::from("application/json"),
+    };
+
+    let body = ResponseEntityBody{
+        body:content,
+    };
+
+    let response = Response{
+        status_line,
+        header_lines,
+        blank_line:"",
+        body,
+    };
+
+    let response = format!("{} {} {:?}\r\nconnection: {}\r\ndate: {}\r\ncontent-length: {}\r\ncontent-type: {}\r\n\r\n{}",response.status_line.version,response.status_line.status_code,response.status_line.message,response.header_lines.connection,response.header_lines.date,response.header_lines.content_length,response.header_lines.content_type,response.body.body);
+
+    
     for stream in litstener.incoming(){
         let mut buffer = [0;4096];
         let mut stream = stream?;
 
         let bytes =  stream.read(&mut buffer)?;
 
-        let mut requested_data:Vec<String> = Vec::new();
+        let info =  request::request::Request::request(buffer, bytes);
 
-        let mut data_str = String::new();
+        stream.write_all(response.as_bytes())?;
 
-        for i in 0..bytes{
-            if buffer[i] != 13 && buffer[i] !=10 && buffer[i]!=58{
-                data_str.push(buffer[i] as char);
-            }
-            if buffer[i] == 13{
-                requested_data.push(data_str);
-                data_str = String::new();
-            }
-               
-        } 
-
-        println!("{:?}",requested_data);
-
-        let mut request_line = requested_data[0].split(" ");
-        let header_lines = &requested_data[1..requested_data.len()-1];
-        
-
-
-        let method_option = request_line.next();
-        let url_option = request_line.next();
-        let http_version_option = request_line.next();
-
-
-        let method = Method::new(method_option);
-        let url = URL::new(url_option);
-        let version = Version::version(http_version_option);
-        
-        let request_line = RequestLine::new(method, url, version);
-        let header_lines = RequestHeaders::new(header_lines);
-
-        let mut entity_body = String::new();
-
-        let body_len = match header_lines.header.get("Content-Length") {
-            Some(val)=> val.parse::<usize>().unwrap_or(0),
-            None=>0,
-        };
-
-        let body_content_start = bytes-body_len; 
-
-        for i in body_content_start..bytes{
-            if buffer[i]!=13 && buffer[i]!=10 && buffer[i]!=34{
-                entity_body.push(buffer[i] as char);
-            }
-            
-        }
-
-
-        let blank_line = "";
-        let body = EntityBody{
-            body:&entity_body
-        };
-        let requested_format = RequestFormat{
-            request_line,
-            header_lines,
-            blank_line,
-            body,
-        };
-
-
-        // println!("{:?}",request_line.method.method);
-
-        println!("{:?}",requested_format);
        
     }
     

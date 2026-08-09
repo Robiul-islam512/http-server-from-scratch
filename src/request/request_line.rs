@@ -1,7 +1,7 @@
 pub mod RequestLine{
 
-    use crate::method::Method::Method;
-    use crate::url::URL::URL;
+    use super::super::method::Method::Method;
+    use super::super::url::URL::URL;
 
     #[derive(Debug)]
     pub struct RequestLine<'a>{
