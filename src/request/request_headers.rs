@@ -3,17 +3,23 @@ pub mod RequestHeaders{
 
     #[derive(Debug)]
     pub struct RequestHeaders<'a>{
-        pub header:HashMap<&'a str,&'a str>
+        pub header:HashMap<&'a str,Vec<&'a str>>
     }
 
     impl<'a> RequestHeaders<'a>{
         pub fn new(headers:&'a[String])->Self{
-            let mut header:HashMap<&str,&str> = HashMap::new();
+            let mut header:HashMap<&str,Vec<&'a str>> = HashMap::new();
 
             for header_line in headers{
                 let header_content:Vec<&str> = header_line.split(" ").collect();
                 
-                header.insert(header_content[0], header_content[1]);
+                let mut header_lines:Vec<&str> = Vec::new(); 
+
+                for i in 1..header_content.len(){
+                    header_lines.push(header_content[i]);
+                    // println!("{}",header)
+                }
+                header.insert(header_content[0], header_lines);
             
             }
 

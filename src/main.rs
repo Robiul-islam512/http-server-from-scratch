@@ -4,7 +4,7 @@ use std::str::Bytes;
 use chrono::{DateTime, Local};
 
 mod request;
-mod respone;
+mod response;
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
@@ -17,7 +17,7 @@ fn main()->Result<()>{
 
         let info =  request::request::Request::request(buffer, bytes);
 
-        let response = respone::response::Response::response();
+        let response = response::response::Response::response();
 
 
         stream.write_all(response.as_bytes())?;

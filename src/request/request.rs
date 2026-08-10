@@ -24,7 +24,7 @@ pub mod Request{
         let mut data_str = String::new();
 
         for i in 0..bytes{
-            if buffer[i] != 13 && buffer[i] !=10 && buffer[i]!=58{
+            if buffer[i] != 13 && buffer[i] !=10{
                 data_str.push(buffer[i] as char);
             }
             if buffer[i] == 13{
@@ -51,7 +51,7 @@ pub mod Request{
         let mut entity_body = String::new();
 
         let body_len = match header_lines.header.get("Content-Length") {
-            Some(val)=> val.parse::<usize>().unwrap_or(0),
+            Some(val)=> val[0].parse::<usize>().unwrap_or(0),
             None=>0,
         };
 
@@ -72,7 +72,9 @@ pub mod Request{
             header_lines,
             blank_line,
             body,
-        };
+        };  
+
+        println!("{:?}",requested_format);
 
         return (requested_format.request_line.method,body_len);
 
