@@ -3,26 +3,23 @@ pub mod RequestHeaders{
 
     #[derive(Debug)]
     pub struct RequestHeaders<'a>{
-        pub header:HashMap<&'a str,Vec<&'a str>>
+        pub header:HashMap<&'a str,&'a str>
     }
 
     impl<'a> RequestHeaders<'a>{
         pub fn new(headers:&'a[String])->Self{
-            let mut header:HashMap<&str,Vec<&'a str>> = HashMap::new();
+            let mut header:HashMap<&str,&str> = HashMap::new();
 
             for header_line in headers{
-                let header_content:Vec<&str> = header_line.split(" ").collect();
+                let clone_find = match header_line.find(":"){
+                    Some(ind)=>ind,
+                    None=>0,
+                };
                 
-                let mut header_lines:Vec<&str> = Vec::new(); 
-
-                for i in 1..header_content.len(){
-                    header_lines.push(header_content[i]);
-                    // println!("{}",header)
-                }
-                header.insert(header_content[0], header_lines);
-            
+                let key = &header_line[0..clone_find].trim();
+                let values = &header_line[clone_find+1..].trim();
+                header.insert(key,values);
             }
-
             RequestHeaders {  header }
 
         }

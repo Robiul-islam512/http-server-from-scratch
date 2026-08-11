@@ -83,7 +83,7 @@ pub mod Response{
         let content = "name: my name is robiul";
         let mut content_len = 0;
 
-        for ch in content.chars(){
+        for ch in content.bytes(){
             content_len+=1;
         }
 

@@ -1,7 +1,5 @@
-use std::net::{TcpListener,TcpStream};
+use std::net::{TcpListener};
 use std::io::{Read, Result, Write};
-use std::str::Bytes;
-use chrono::{DateTime, Local};
 
 mod request;
 mod response;
@@ -21,6 +19,8 @@ fn main()->Result<()>{
 
 
         stream.write_all(response.as_bytes())?;
+
+        // println!("Request Info: {:?}", info);
 
         
        

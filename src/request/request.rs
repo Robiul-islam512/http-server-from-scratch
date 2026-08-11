@@ -1,13 +1,19 @@
 pub mod Request{
+    use crate::request;
+
     use super::super::method::Method::Method;
     use super::super::url::URL::URL;
     use super::super::request_headers::RequestHeaders::RequestHeaders;
     use super::super::request_line::RequestLine::RequestLine;
     use super::super::version::Version;
 
+    pub trait RequestParse {
+        fn parse(&self)->Vec<String>;
+    }
+
     #[derive(Debug)]
-    struct EntityBody<'a>{
-        body:&'a str,
+    struct EntityBody{
+        body:String,
     }
 
     #[derive(Debug)]
@@ -15,16 +21,28 @@ pub mod Request{
         request_line:RequestLine<'a>,
         header_lines:RequestHeaders<'a>,
         blank_line:&'a str,
-        body:EntityBody<'a>,
+        body:EntityBody,
     }
 
-    pub fn request(buffer:[u8;4096],bytes:usize)->(Method,usize){
+    impl<'a> RequestParse for RequestFormat<'a> {
+        fn parse(&self)->Vec<String> {
+            vec![
+                format!("{:?}", self.request_line),
+                format!("{:?}", self.header_lines.header),
+                format!("{:?}", self.blank_line),
+                format!("{:?}", self.body.body)
+            ]
+        }
+    }
+
+    
+    pub fn request(buffer:[u8;4096],bytes:usize)->Vec<String>{
         let mut requested_data:Vec<String> = Vec::new();
 
         let mut data_str = String::new();
 
         for i in 0..bytes{
-            if buffer[i] != 13 && buffer[i] !=10{
+            if buffer[i] != 13 && buffer[i] !=10 {
                 data_str.push(buffer[i] as char);
             }
             if buffer[i] == 13{
@@ -34,8 +52,20 @@ pub mod Request{
                
         } 
 
-        let mut request_line = requested_data[0].split(" ");
-        let header_lines = &requested_data[1..requested_data.len()-1];
+        let request_lines = Some(&requested_data[0]);
+        let header_lines = requested_data.get(1..requested_data.len()-1);
+
+        let request_lines = match request_lines {
+            Some(line)=>line,
+            None=>"",
+        };
+
+        let header_lines = match header_lines {
+            Some(headers)=>headers,
+            None=>&["".to_string()],
+        };
+
+        let mut request_line =  request_lines.split(" ");
         
         let method_option = request_line.next();
         let url_option = request_line.next();
@@ -48,24 +78,12 @@ pub mod Request{
         let request_line = RequestLine::new(method, url, version);
         let header_lines = RequestHeaders::new(header_lines);
 
-        let mut entity_body = String::new();
+        let entity_body = data_str;
 
-        let body_len = match header_lines.header.get("Content-Length") {
-            Some(val)=> val[0].parse::<usize>().unwrap_or(0),
-            None=>0,
-        };
-
-        let body_content_start = bytes-body_len; 
-
-        for i in body_content_start..bytes{
-            if buffer[i]!=13 && buffer[i]!=10 && buffer[i]!=34{
-                entity_body.push(buffer[i] as char);
-            }
-        }
 
         let blank_line = "";
         let body = EntityBody{
-            body:&entity_body
+            body:entity_body.clone()
         };
         let requested_format = RequestFormat{
             request_line,
@@ -73,12 +91,10 @@ pub mod Request{
             blank_line,
             body,
         };  
-
-        println!("{:?}",requested_format);
-
-        return (requested_format.request_line.method,body_len);
-
         
+println!("{:?}",requested_format);
+
+        requested_format.parse()
 
     }
 }
