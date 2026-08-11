@@ -1,5 +1,7 @@
 pub mod Request{
-    use crate::request;
+    use std::collections::HashMap;
+
+use crate::request;
 
     use super::super::method::Method::Method;
     use super::super::url::URL::URL;
@@ -8,7 +10,7 @@ pub mod Request{
     use super::super::version::Version;
 
     pub trait RequestParse {
-        fn parse(&self)->Vec<String>;
+        fn parse(&self)->HashMap<String,String>;
     }
 
     #[derive(Debug)]
@@ -25,18 +27,21 @@ pub mod Request{
     }
 
     impl<'a> RequestParse for RequestFormat<'a> {
-        fn parse(&self)->Vec<String> {
-            vec![
-                format!("{:?}", self.request_line),
-                format!("{:?}", self.header_lines.header),
-                format!("{:?}", self.blank_line),
-                format!("{:?}", self.body.body)
-            ]
+        fn parse(&self)->HashMap<String,String>{
+            let mut content:HashMap<String,String> = HashMap::new();
+
+            content.insert("method".to_string(),format!("{:?}",self.request_line.method.method));
+            content.insert("url".to_string(), format!("{:?}",self.request_line.url.url.trim()));
+            content.insert("header".to_string(), format!("{:?}",self.header_lines.header));
+            content.insert("body".to_string(), format!("{:?}",self.body.body.trim()));
+
+            content
+            // vec![content]
         }
     }
 
     
-    pub fn request(buffer:[u8;4096],bytes:usize)->Vec<String>{
+    pub fn request(buffer:[u8;4096],bytes:usize)->HashMap<String,String>{
         let mut requested_data:Vec<String> = Vec::new();
 
         let mut data_str = String::new();
@@ -49,7 +54,6 @@ pub mod Request{
                 requested_data.push(data_str);
                 data_str = String::new();
             }
-               
         } 
 
         let request_lines = Some(&requested_data[0]);
@@ -78,12 +82,15 @@ pub mod Request{
         let request_line = RequestLine::new(method, url, version);
         let header_lines = RequestHeaders::new(header_lines);
 
-        let entity_body = data_str;
 
+        let mut entity_data = String::new();
+        for body in data_str.split(" "){
+            entity_data.push_str(body.trim());
+        }
 
         let blank_line = "";
         let body = EntityBody{
-            body:entity_body.clone()
+            body:entity_data,
         };
         let requested_format = RequestFormat{
             request_line,
@@ -91,8 +98,6 @@ pub mod Request{
             blank_line,
             body,
         };  
-        
-println!("{:?}",requested_format);
 
         requested_format.parse()
 
