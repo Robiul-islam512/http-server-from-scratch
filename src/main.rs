@@ -15,6 +15,20 @@ fn buffer(stream:&mut TcpStream)->Result<([u8;4096],usize)>{
     Ok((buffer,bytes))
 }
 
+fn file(file_name:&str)->Result<String>{
+    
+    let f = File::open(file_name)?;
+    let read = BufReader::new(&f);
+
+    let mut html_content = String::new();
+
+    for content in read.lines(){
+        let content = content?;
+        html_content.push_str(&content);
+    }
+
+    Ok(html_content)
+}
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
@@ -42,15 +56,14 @@ fn main()->Result<()>{
         match data_info {
             Ok(data)=>match data.get("method").map(|v| v.as_str()){
                 Some("GET")=>{
-                    let f = File::open("index.html")?;
-                    let read = BufReader::new(f);
+                    let f = file("index.html");
 
-                    let mut html_content = String::new();
-
-                    for content in read.lines(){
-                        let content = content?;
-                        html_content.push_str(&content);
-                    }
+                    let html_content = match f {
+                        Ok(file)=>file,
+                        Err(_)=>{
+                            "<h1>Somthing Went Wrong<h1>".to_string()
+                        }
+                    };
 
                     let response = response(&ContentyType::TextHtml.as_str(), html_content);
 
@@ -65,7 +78,6 @@ fn main()->Result<()>{
                 }
             },
             Err(e)=>{
-                println!("{:?}",e);
                 let message = e.to_string();
                 let body = message.as_bytes();
                 stream.write_all(body)?;
