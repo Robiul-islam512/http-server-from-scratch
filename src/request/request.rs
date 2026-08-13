@@ -1,14 +1,9 @@
 pub mod Request{
-    use core::error;
     use std::collections::HashMap;
-    use std::fmt;
-    use crate::request;
-use crate::request::request_error::RequestError::MessageFormate;
-    use serde::Serialize;
 
-
+    use crate::request::request_error::RequestError::MessageFormate;
     use crate::response::content_type::ContentyType::ContentyType;
-    use super::super::method::Method::Method;
+    use super::super::method::method::Method;
     use super::super::url::URL::URL;
     use super::super::request_headers::RequestHeaders::RequestHeaders;
     use super::super::request_line::RequestLine::RequestLine;
@@ -111,14 +106,7 @@ use crate::request::request_error::RequestError::MessageFormate;
             body:error_msg,
         };
         
-
-        println!("{:?}",bad_req);
-
-        if request_lines.is_empty() || header_lines.is_empty() || data_str.len() == 0 {
-            return Err(
-                HttpError::BadRequestError(bad_req.msg(body))
-            );
-        }
+       
 
         let mut request_line =  request_lines.split(" ");
         
@@ -130,23 +118,28 @@ use crate::request::request_error::RequestError::MessageFormate;
         let url = URL::new(url_option);
         let version = Version::version(http_version_option);
         
-        let request_line = RequestLine::new(method, url, version);
+        let request_line = RequestLine::new(&method, url, version);
         let header_lines = RequestHeaders::new(header_lines);
 
+
+         if method.method.as_str() == "POST" && (request_lines.is_empty() || header_lines.header.is_empty() || data_str.len() == 0) {
+            return Err(
+                HttpError::BadRequestError(bad_req.msg(body))
+            );
+        }
 
         let mut entity_data = String::new();
         for body in data_str.split(" "){
             entity_data.push_str(body.trim());
         }
-
-        let blank_line = "";
+        
         let body = EntityBody{
             body:entity_data,
         };
         let requested_format = RequestFormat{
             request_line,
             header_lines,
-            blank_line,
+            blank_line:"\r\n",
             body,
         };  
 

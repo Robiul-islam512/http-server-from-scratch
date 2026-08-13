@@ -1,9 +1,5 @@
 pub mod Response{
     use chrono::Local;
-    use crate::response::{self, content_type};
-    use std::{fs, io::BufReader};
-
-
     use super::super::content_type::ContentyType::{ContentyType};
 
     pub trait ResponseMessage {
@@ -77,11 +73,6 @@ pub mod Response{
             return format!("{} {} {:?}\r\nconnection: {}\r\ndate: {}\r\ncontent-length: {}\r\ncontent-type: {}\r\n\r\n{}",self.status_line.version,self.status_line.status_code,self.status_line.message,self.header_lines.connection,self.header_lines.date,self.header_lines.content_length,self.header_lines.content_type,self.body.body);
         }
     }
-
-    // pub fn content_type(con_type:ContentyType)->String{
-
-    // }
-
 
     pub fn response(content_type:&str,content:String)->String{
 

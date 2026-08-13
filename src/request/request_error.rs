@@ -2,7 +2,6 @@ pub mod RequestError{
     use serde::Serialize;
     use std::fmt;
     use std::error;
-    use crate::response::content_type::ContentyType::ContentyType;
 
     pub trait BadRequestMessage {
         fn message(&self)->String;

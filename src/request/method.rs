@@ -1,5 +1,5 @@
 
-pub mod Method{
+pub mod method{
 
     #[derive(Debug)]
     pub enum MethodType{

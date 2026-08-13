@@ -1,13 +1,9 @@
 use std::net::{TcpListener};
 use std::io::{BufRead, BufReader, Read, Result, Write};
-use serde_json::Value;
-use std::fs::{File, read, write};
-use std::error::Error;
+use std::fs::{File};
 
 use response::content_type::ContentyType::ContentyType;
 use response::response::Response::response;
-
-use crate::request::method::Method::MethodType;
 
 mod request;
 mod response;
@@ -28,6 +24,19 @@ fn main()->Result<()>{
         match data_info {
             Ok(data)=>match data.get("method").map(|v| v.as_str()){
                 Some("GET")=>{
+                    let f = File::open("index.html")?;
+                    let read = BufReader::new(f);
+
+                    let mut html_content = String::new();
+
+                    for content in read.lines(){
+                        let content = content?;
+                        html_content.push_str(&content);
+                    }
+
+                    let response = response(&ContentyType::TextHtml.as_str(), html_content);
+
+                    stream.write_all(response.as_bytes())?;
 
                 },
                 Some("POST")=>{
@@ -46,44 +55,6 @@ fn main()->Result<()>{
 
         }
 
-
-        // let method = match data_info{
-        //     Ok(data)=> match data.get("method").map(|v| v.as_str()){
-        //         Some("GET")=>MethodType::GET,
-        //         Some("POST")=>MethodType::POST,
-        //         _=>MethodType::GET,
-        //     }
-        //     Err(e)=>{
-        //         stream.write_all(e)
-        //         // stream.write_all)
-        //     }
-        // };
-
-
-        // if &method.as_str() == "GET"{
-
-        //     let f = File::open("index.html")?;
-
-        //     let read =  BufReader::new(f);
-
-        //     let mut html_file = String::new();
-
-        //     for line in read.lines(){
-        //         let line = line?;
-        //         html_file.push_str(&line);
-        //     }
-
-        //     let text_html_content = ContentyType::TextHtml.as_str();
-        //     let application_json = ContentyType::ApplicationJSON.as_str();
-
-        //     let response = response(&text_html_content,html_file);
-        
-
-        //     stream.write_all(response.as_bytes())?;
-        // }
-
-
-       
     }
     
     Ok(())

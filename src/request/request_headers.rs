@@ -17,8 +17,18 @@ pub mod RequestHeaders{
                 };
 
                 
-                let key = &header_line[0..clone_find].trim();
-                let values = &header_line[clone_find+1..].trim();
+                let key = header_line.get(0..clone_find);
+                let values = header_line.get(clone_find+1..);
+
+                let key = match key {
+                    Some(k)=>k,
+                    None=>"",
+                };
+
+                let values = match values{
+                    Some(v)=>v,
+                    None=>"",
+                };
                 header.insert(key,values);
             }
             RequestHeaders {  header }
