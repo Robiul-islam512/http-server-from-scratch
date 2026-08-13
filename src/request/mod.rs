@@ -4,3 +4,4 @@ pub mod request_headers;
 pub mod request_line;
 pub mod url;
 pub mod version;
+pub mod request_error;

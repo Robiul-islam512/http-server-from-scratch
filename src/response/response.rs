@@ -1,5 +1,10 @@
 pub mod Response{
     use chrono::Local;
+    use crate::response::{self, content_type};
+    use std::{fs, io::BufReader};
+
+
+    use super::super::content_type::ContentyType::{ContentyType};
 
     pub trait ResponseMessage {
         fn message(&self)->String;
@@ -73,28 +78,39 @@ pub mod Response{
         }
     }
 
-    pub fn response()->String{
+    // pub fn content_type(con_type:ContentyType)->String{
+
+    // }
+
+
+    pub fn response(content_type:&str,content:String)->String{
+
+        let content =  match content_type {
+            "text/html"=>{
+                content
+            },
+            "application/json"=>{
+                "{}".to_string()
+            },
+            _=>{
+                "".to_string()
+            }
+        };
+
         let status_line = StatusLine::new(
             String::from("HTTP/1.1"), 
             200, 
             StatusMessage::Ok,
         );
 
-        let content = "name: my name is robiul";
-        let mut content_len = 0;
-
-        for ch in content.bytes(){
-            content_len+=1;
-        }
-
         let header_lines = ResponseHeaderLines::new(
-            String::from("Close"),
+            String::from("keep-alive"),
             Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-            content_len,
-            String::from("application/json"),
+            content.bytes().len(),
+            content_type.to_string(),
         );
 
-        let body = ResponseEntityBody::new(content);
+        let body = ResponseEntityBody::new(&content);
 
         let response = Response::new(
             status_line,

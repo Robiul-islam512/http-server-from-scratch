@@ -2,9 +2,16 @@ use std::net::{TcpListener};
 use std::io::{BufRead, BufReader, Read, Result, Write};
 use serde_json::Value;
 use std::fs::{File, read, write};
+use std::error::Error;
+
+use response::content_type::ContentyType::ContentyType;
+use response::response::Response::response;
+
+use crate::request::method::Method::MethodType;
 
 mod request;
 mod response;
+
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
@@ -17,43 +24,65 @@ fn main()->Result<()>{
 
         let data_info =  request::request::Request::request(buffer, bytes);
 
-        let response = response::response::Response::response();
 
-        // for data in data_info.iter(){
-        //     for (k,v) in data{
-        //         println!("{} {}",k,v);
-        //     }
-        //     println!();
-        //     // println!("{} {}",k,v);
-        // }
+        match data_info {
+            Ok(data)=>match data.get("method").map(|v| v.as_str()){
+                Some("GET")=>{
 
-        let user_body_data = match data_info.get("body"){
-            Some(body)=>body,
-            None=>"",
-        };
+                },
+                Some("POST")=>{
 
-        let f = File::open("data.json")?;
+                },
+                _=>{
 
-        let mut read =  BufReader::new(f);
+                }
+            },
+            Err(e)=>{
+                println!("{:?}",e);
+                let message = e.to_string();
+                let body = message.as_bytes();
+                stream.write_all(body)?;
+            }
 
-        for line in read.lines(){
-            let line = line?;
-            write("data.json", &user_body_data)?;
-            println!("{}",line);
         }
 
-        // print!("{:?}",read);
+
+        // let method = match data_info{
+        //     Ok(data)=> match data.get("method").map(|v| v.as_str()){
+        //         Some("GET")=>MethodType::GET,
+        //         Some("POST")=>MethodType::POST,
+        //         _=>MethodType::GET,
+        //     }
+        //     Err(e)=>{
+        //         stream.write_all(e)
+        //         // stream.write_all)
+        //     }
+        // };
 
 
-        // println!("{}",json_val);
-        // println!("{}",user_body_data);
+        // if &method.as_str() == "GET"{
 
-        // println!("{:?}",data_info);
-        stream.write_all(response.as_bytes())?;
+        //     let f = File::open("index.html")?;
 
-        // println!("Request Info: {:?}", info);
+        //     let read =  BufReader::new(f);
 
+        //     let mut html_file = String::new();
+
+        //     for line in read.lines(){
+        //         let line = line?;
+        //         html_file.push_str(&line);
+        //     }
+
+        //     let text_html_content = ContentyType::TextHtml.as_str();
+        //     let application_json = ContentyType::ApplicationJSON.as_str();
+
+        //     let response = response(&text_html_content,html_file);
         
+
+        //     stream.write_all(response.as_bytes())?;
+        // }
+
+
        
     }
     

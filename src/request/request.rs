@@ -1,13 +1,22 @@
 pub mod Request{
+    use core::error;
     use std::collections::HashMap;
+    use std::fmt;
+    use crate::request;
+use crate::request::request_error::RequestError::MessageFormate;
+    use serde::Serialize;
 
-use crate::request;
 
+    use crate::response::content_type::ContentyType::ContentyType;
     use super::super::method::Method::Method;
     use super::super::url::URL::URL;
     use super::super::request_headers::RequestHeaders::RequestHeaders;
     use super::super::request_line::RequestLine::RequestLine;
     use super::super::version::Version;
+
+    use super::super::request_error::RequestError::HttpError;
+    use super::super::request_error::RequestError::{ErrorBodyMessage,BadRequestError,BadRequestStatusLine,BadRequestMessage};
+    
 
     pub trait RequestParse {
         fn parse(&self)->HashMap<String,String>;
@@ -36,12 +45,10 @@ use crate::request;
             content.insert("body".to_string(), format!("{:?}",self.body.body.trim()));
 
             content
-            // vec![content]
         }
     }
-
     
-    pub fn request(buffer:[u8;4096],bytes:usize)->HashMap<String,String>{
+    pub fn request(buffer:[u8;4096],bytes:usize)->Result<HashMap<String,String>,HttpError>{
         let mut requested_data:Vec<String> = Vec::new();
 
         let mut data_str = String::new();
@@ -56,8 +63,13 @@ use crate::request;
             }
         } 
 
-        let request_lines = Some(&requested_data[0]);
-        let header_lines = requested_data.get(1..requested_data.len()-1);
+        let request_lines =  requested_data.get(0);
+
+        let header_lines =  if requested_data.len()>2{
+            requested_data.get(1..requested_data.len()-1)
+        }else{
+           None
+        };
 
         let request_lines = match request_lines {
             Some(line)=>line,
@@ -68,6 +80,45 @@ use crate::request;
             Some(headers)=>headers,
             None=>&["".to_string()],
         };
+
+        let bad_req_status_line = BadRequestStatusLine{
+            http_version:"HTTP/1.1".to_string(),
+            status_code:400,
+            request:"Bad Request".to_string(),
+        };
+
+        let msg = "Request body could not be read properly.".to_string();
+       
+
+        let error_msg = ErrorBodyMessage{
+            error:"Bad Request".to_string(),
+            message:msg,
+        };  
+
+        let body = match serde_json::to_string(&error_msg){
+            Ok(val)=>val,
+            Err(e)=>{
+                return Err(
+                    HttpError::FailedToSerialize(e.to_string())
+                );
+            }
+        };
+
+        let bad_req = BadRequestError{
+            status_line:bad_req_status_line.message(),
+            content_type:ContentyType::ApplicationJSON.as_str(),
+            content_length:body.as_bytes().len(),
+            body:error_msg,
+        };
+        
+
+        println!("{:?}",bad_req);
+
+        if request_lines.is_empty() || header_lines.is_empty() || data_str.len() == 0 {
+            return Err(
+                HttpError::BadRequestError(bad_req.msg(body))
+            );
+        }
 
         let mut request_line =  request_lines.split(" ");
         
@@ -99,7 +150,7 @@ use crate::request;
             body,
         };  
 
-        requested_format.parse()
+        Ok(requested_format.parse())
 
     }
 }

@@ -11,6 +11,19 @@ pub mod Method{
         NONE,
     }
 
+    impl MethodType {
+        pub fn as_str(&self)->String{
+            match self {
+                Self::GET=>"GET".to_string(),
+                Self::POST=>"POST".to_string(),
+                Self::DELETE=>"DELETE".to_string(),
+                Self::HEAD=>"HEAD".to_string(),
+                Self::PUT=>"PUT".to_string(),
+                Self::NONE=>"NONE".to_string(),
+            }
+        }
+    }
+
     #[derive(Debug)]
     pub struct Method{
         pub method:MethodType

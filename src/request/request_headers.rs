@@ -15,6 +15,7 @@ pub mod RequestHeaders{
                     Some(ind)=>ind,
                     None=>0,
                 };
+
                 
                 let key = &header_line[0..clone_find].trim();
                 let values = &header_line[clone_find+1..].trim();
