@@ -1,4 +1,4 @@
-use std::net::{TcpListener};
+use std::net::{TcpListener, TcpStream};
 use std::io::{BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
 
@@ -8,15 +8,33 @@ use response::response::Response::response;
 mod request;
 mod response;
 
+fn buffer(stream:&mut TcpStream)->Result<([u8;4096],usize)>{
+    let mut buffer = [0;4096];
+    let bytes = stream.read(&mut buffer)?;
+    
+    Ok((buffer,bytes))
+}
+
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
     
     for stream in litstener.incoming(){
-        let mut buffer = [0;4096];
+
         let mut stream = stream?;
 
-        let bytes =  stream.read(&mut buffer)?;
+        let buffer_values = buffer(&mut stream);
+
+        let buffer_val = match buffer_values {
+            Ok(buf)=>buf,
+            Err(e)=>{
+                eprintln!("Buffer Error: {}",e);
+                ([0;4096],0)
+            },
+        };
+
+        let buffer = buffer_val.0;
+        let bytes = buffer_val.1;
 
         let data_info =  request::request::Request::request(buffer, bytes);
 
@@ -59,5 +77,3 @@ fn main()->Result<()>{
     
     Ok(())
 }
-
-
