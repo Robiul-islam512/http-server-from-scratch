@@ -2,7 +2,6 @@ pub mod response{
     use chrono::Local;
     use serde::Serialize;
     
-    // stringfy my data
     pub trait ResponseMessage {
         fn message(&self)->String;
     }

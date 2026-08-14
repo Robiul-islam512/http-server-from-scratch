@@ -1,12 +1,13 @@
-pub mod Request{
+pub mod request{
     use std::collections::HashMap;
 
     use crate::request::request_error::RequestError::MessageFormate;
-    use crate::response::content_type::ContentyType::ContentyType;
+    use crate::request::request_headers::request_header::ParseHeader;
+    use crate::response::content_type::content_type::ContentyType;
     use super::super::method::method::Method;
     use super::super::url::URL::URL;
-    use super::super::request_headers::RequestHeaders::RequestHeaders;
-    use super::super::request_line::RequestLine::RequestLine;
+    use super::super::request_headers::request_header::RequestHeaders;
+    use super::super::request_line::request_line::RequestLine;
     use super::super::version::Version;
 
     use super::super::request_error::RequestError::HttpError;
@@ -34,9 +35,9 @@ pub mod Request{
         fn parse(&self)->HashMap<String,String>{
             let mut content:HashMap<String,String> = HashMap::new();
 
-            content.insert("method".to_string(),format!("{:?}",self.request_line.method.method));
-            content.insert("url".to_string(), format!("{:?}",self.request_line.url.url.trim()));
-            content.insert("header".to_string(), format!("{:?}",self.header_lines.header));
+            content.insert("method".to_string(),format!("{}",self.request_line.method.method.as_str()));
+            content.insert("url".to_string(), format!("{}",self.request_line.url.url));
+            content.insert("header".to_string(), format!("{:?}",self.header_lines.parse()));
             content.insert("body".to_string(), format!("{:?}",self.body.body.trim()));
 
             content
@@ -119,20 +120,16 @@ pub mod Request{
         let header_lines = RequestHeaders::new(header_lines);
 
 
-         if method.method.as_str() == "POST" && (request_lines.is_empty() || header_lines.header.is_empty() || data_str.len() == 0) {
+        if method.method.as_str() == "POST" && (request_lines.is_empty() || header_lines.header.is_empty() || data_str.len() == 0) {
             return Err(
                 HttpError::BadRequestError(bad_req.msg(body))
             );
         }
 
-        let mut entity_data = String::new();
-        for body in data_str.split(" "){
-            entity_data.push_str(body.trim());
-        }
-        
         let body = EntityBody{
-            body:entity_data,
+            body:data_str,
         };
+
         let requested_format = RequestFormat{
             request_line,
             header_lines,

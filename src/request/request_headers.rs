@@ -1,9 +1,24 @@
-pub mod RequestHeaders{
+pub mod request_header{
     use std::collections::HashMap;
+
+   pub trait ParseHeader {
+        fn parse(&self)->Vec<String>;
+    }
 
     #[derive(Debug)]
     pub struct RequestHeaders<'a>{
         pub header:HashMap<&'a str,&'a str>
+    }
+
+    impl<'a> ParseHeader for RequestHeaders<'a> {
+        fn parse(&self)->Vec<String> {
+            
+           let format = self.header
+           .iter()
+           .map(|header|format!("{}: {}",header.0,header.1))
+           .collect();
+            format
+        }
     }
 
     impl<'a> RequestHeaders<'a>{

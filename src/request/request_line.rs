@@ -1,7 +1,9 @@
-pub mod RequestLine{
+pub mod request_line{
 
     use super::super::method::method::Method;
     use super::super::url::URL::URL;
+
+
 
     #[derive(Debug)]
     pub struct RequestLine<'a>{
@@ -10,9 +12,11 @@ pub mod RequestLine{
         pub version:&'a str,
     }
 
+ 
+
     impl<'a> RequestLine<'a> {
         pub fn new(method:&'a Method,url:URL<'a>,version: &'a str)->Self{
-            RequestLine { method: method, url: url, version: version }
+            RequestLine { method, url, version }
         }
     }
 

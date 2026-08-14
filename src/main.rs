@@ -2,7 +2,7 @@ use std::net::{TcpListener, TcpStream};
 use std::io::{BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
 
-use response::content_type::ContentyType::ContentyType;
+use response::content_type::content_type::ContentyType;
 use response::response::response::{response};
 
 mod request;
@@ -29,8 +29,9 @@ fn main()->Result<()>{
         let buffer = buffer_val.0;
         let bytes = buffer_val.1;
 
-        let data_info =  request::request::Request::request(buffer, bytes);
+        let data_info =  request::request::request::request(buffer, bytes);
 
+        println!("{:?}",data_info);
 
         match data_info {
             Ok(data)=>match data.get("method").map(|v| v.as_str()){
@@ -46,18 +47,25 @@ fn main()->Result<()>{
 
                     let response = response(&ContentyType::TextHtml.as_str(), html_content);
 
-                    stream.write_all(response.as_bytes())?;
+                    let _= write(&mut stream, response);
 
                 },
                 Some("POST")=>{
 
-                    let content = "robiul".to_string();
+                    let content = match data.get("body"){
+                        Some(val)=>{
+                            println!("{}",val);
+                            val.to_string()
+                        },
+                        None=>{
+                           String::new()
+                        }
+                    };
 
                     let response = response(&ContentyType::ApplicationJSON.as_str(), content);
 
-                    println!("{}",response);
-
-                    stream.write_all(response.as_bytes())?;
+                    
+                    let _= write(&mut stream,response);
                 },
                 _=>{
                     eprintln!("Does not match with any method");
@@ -65,14 +73,20 @@ fn main()->Result<()>{
             },
             Err(e)=>{
                 let message = e.to_string();
-                let body = message.as_bytes();
-                stream.write_all(body)?;
+                let _ = write(&mut stream, message);
             }
 
         }
 
     }
     
+    Ok(())
+}
+
+fn write(stream:&mut TcpStream,server_response:String)->Result<()>{
+
+    stream.write_all(server_response.as_bytes())?;
+
     Ok(())
 }
 
