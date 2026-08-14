@@ -3,32 +3,11 @@ use std::io::{BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
 
 use response::content_type::ContentyType::ContentyType;
-use response::response::Response::response;
+use response::response::response::{response};
 
 mod request;
 mod response;
 
-fn buffer(stream:&mut TcpStream)->Result<([u8;4096],usize)>{
-    let mut buffer = [0;4096];
-    let bytes = stream.read(&mut buffer)?;
-    
-    Ok((buffer,bytes))
-}
-
-fn file(file_name:&str)->Result<String>{
-    
-    let f = File::open(file_name)?;
-    let read = BufReader::new(&f);
-
-    let mut html_content = String::new();
-
-    for content in read.lines(){
-        let content = content?;
-        html_content.push_str(&content);
-    }
-
-    Ok(html_content)
-}
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
@@ -72,6 +51,13 @@ fn main()->Result<()>{
                 },
                 Some("POST")=>{
 
+                    let content = "robiul".to_string();
+
+                    let response = response(&ContentyType::ApplicationJSON.as_str(), content);
+
+                    println!("{}",response);
+
+                    stream.write_all(response.as_bytes())?;
                 },
                 _=>{
 
@@ -88,4 +74,26 @@ fn main()->Result<()>{
     }
     
     Ok(())
+}
+
+fn buffer(stream:&mut TcpStream)->Result<([u8;4096],usize)>{
+    let mut buffer = [0;4096];
+    let bytes = stream.read(&mut buffer)?;
+    
+    Ok((buffer,bytes))
+}
+
+fn file(file_name:&str)->Result<String>{
+    
+    let f = File::open(file_name)?;
+    let read = BufReader::new(&f);
+
+    let mut html_content = String::new();
+
+    for content in read.lines(){
+        let content = content?;
+        html_content.push_str(&content);
+    }
+
+    Ok(html_content)
 }

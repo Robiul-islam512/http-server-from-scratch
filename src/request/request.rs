@@ -81,13 +81,10 @@ pub mod Request{
             status_code:400,
             request:"Bad Request".to_string(),
         };
-
-        let msg = "Request body could not be read properly.".to_string();
        
-
         let error_msg = ErrorBodyMessage{
             error:"Bad Request".to_string(),
-            message:msg,
+            message:"Request body could not be read properly.".to_string(),
         };  
 
         let body = match serde_json::to_string(&error_msg){
