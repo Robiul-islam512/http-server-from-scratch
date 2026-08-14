@@ -60,7 +60,7 @@ fn main()->Result<()>{
                     stream.write_all(response.as_bytes())?;
                 },
                 _=>{
-
+                    eprintln!("Does not match with any method");
                 }
             },
             Err(e)=>{
