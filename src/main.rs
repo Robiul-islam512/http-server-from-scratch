@@ -1,9 +1,11 @@
+use core::error;
 use std::net::{TcpListener, TcpStream};
-use std::io::{BufRead, BufReader, Read, Result, Write};
+use std::io::{self, BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
 
 use response::content_type::content_type::ContentyType;
 use response::response::response::{response};
+use request::request_error::request_error::HttpError;
 
 mod request;
 mod response;
@@ -14,7 +16,18 @@ fn main()->Result<()>{
     
     for stream in litstener.incoming(){
 
-        let mut stream = stream?;
+
+        let stream = tcp_stream(stream);
+
+        let mut stream = match stream {
+            Ok(strm)=>strm,
+            Err(e)=>{
+                eprintln!("ERROR: {}",e);
+                continue;
+            }
+        };
+
+
 
         let buffer_values = buffer(&mut stream);
 
@@ -81,6 +94,17 @@ fn main()->Result<()>{
     }
     
     Ok(())
+}
+
+
+
+fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpError>{
+    match stream {
+        Ok(strm)=>Ok(strm),
+        Err(e)=>{
+            return Err(HttpError::ServerError(e.to_string()));
+        }
+    }
 }
 
 fn write(stream:&mut TcpStream,server_response:String)->Result<()>{
