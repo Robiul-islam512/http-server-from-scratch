@@ -1,4 +1,4 @@
-pub mod RequestError{
+pub mod request_error{
     use serde::Serialize;
     use std::fmt;
     use std::error;
@@ -35,7 +35,8 @@ pub mod RequestError{
     #[derive(Debug)]
     pub enum HttpError{
         BadRequestError(String),
-        FailedToSerialize(String)
+        FailedToSerialize(String),
+        ServerError(String),
     }
 
     impl fmt::Display for HttpError{
@@ -43,6 +44,7 @@ pub mod RequestError{
             match self {
                 HttpError::BadRequestError(msg)=>write!(f,"{}",msg),
                 HttpError::FailedToSerialize(msg)=>write!(f, "Failed to serialize: {}",msg),
+                HttpError::ServerError(msg)=>write!(f,"Internal Server Error: {}",msg),
             }
         }
     }

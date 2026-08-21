@@ -1,4 +1,4 @@
-pub mod URL{
+pub mod url{
     #[derive(Debug)]
     pub struct URL<'a>{
         pub url:&'a str,

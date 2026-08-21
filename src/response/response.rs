@@ -1,5 +1,5 @@
+
 pub mod response{
-    use chrono::Local;
     use serde::Serialize;
     
     pub trait ResponseMessage {
@@ -8,7 +8,7 @@ pub mod response{
 
 
     #[derive(Debug)]
-    enum StatusMessage{
+    pub enum StatusMessage{
         Ok,//200
         BadRequest,//400
     }   
@@ -52,21 +52,21 @@ pub mod response{
 
 
     #[derive(Debug)]
-    struct StatusLine{
+    pub struct StatusLine{
         version:String,
         status_code:u32,
         message:StatusMessage,
     }
 
     impl StatusLine {
-        fn new(version:String,status_code:u32,message:StatusMessage)->Self{
+        pub fn new(version:String,status_code:u32,message:StatusMessage)->Self{
             StatusLine { version, status_code, message }
         }
     }
 
 
     #[derive(Debug)]
-    struct ResponseHeaderLines{
+    pub struct ResponseHeaderLines{
         connection:String,
         date:String,
         content_length:usize,
@@ -74,14 +74,14 @@ pub mod response{
     }
 
     impl ResponseHeaderLines {
-        fn new(connection:String,date:String,content_length:usize,content_type:String)->Self{
+        pub fn new(connection:String,date:String,content_length:usize,content_type:String)->Self{
             ResponseHeaderLines { connection, date, content_length, content_type }
         }
     }
 
 
     #[derive(Debug)]
-    struct Response<'a>{
+    pub struct Response<'a>{
         status_line:StatusLine,
         header_lines:ResponseHeaderLines,
         blank_line:&'a str,
@@ -90,7 +90,7 @@ pub mod response{
 
 
     impl<'a> Response<'a> {
-        fn new(status_line:StatusLine,header_lines:ResponseHeaderLines,blank_line:&'a str,body:Body)->Self{
+        pub fn new(status_line:StatusLine,header_lines:ResponseHeaderLines,blank_line:&'a str,body:Body)->Self{
             Response { status_line, header_lines, blank_line, body }
         }
     }
@@ -110,46 +110,152 @@ pub mod response{
         }
     }
 
+    pub struct HtmlHeadersResponse{
+        connection:String,
+        date:String,
+        content_length:usize,
+        content_type:String,
+    }
+
+    impl HtmlHeadersResponse {
+        pub fn new(connection:String,date:String,content_length:usize,content_type:String)->Self{
+
+            Self { connection, date, content_length, content_type }
+            
+        }
+    }
+
+    pub struct HtmlResponse{
+        status_line:StatusLine,
+        header_lines:HtmlHeadersResponse,
+    }
+
+    impl HtmlResponse {
+        pub fn new(status_line:StatusLine,header_lines:HtmlHeadersResponse)->Self{
+            Self { status_line, header_lines }
+        }
+    }
+
+    impl ResponseMessage for HtmlResponse {
+        fn message(&self)->String {
+            format!("{} {} {}\r\n\
+            Connection: {}\r\n\
+            Date: {}\r\n\
+            Content-Length: {}\r\n\
+            Content-Type: {}\r\n\r\n",
+            self.status_line.version,
+            self.status_line.status_code,
+            self.status_line.message.msg(),
+              self.header_lines.connection,
+              self.header_lines.date,
+              self.header_lines.content_length,
+              self.header_lines.content_type,
+            )
+        }
+    }
+
+
     pub fn response(content_type:&str,content:String)->String{
+    
+        use crate::response::response::{json_content,html_content};
 
-        let status_line = StatusLine::new(
-            String::from("HTTP/1.1"), 
-            200, 
-            StatusMessage::Ok,
-        );
-
-
-        let content = content;
-
-        let data = ResponseData{
-            data:content,
+        let res =  match content_type {
+            "application/json"=>{
+                json_content(content)
+            },
+            "text/html"=>{
+                html_content(content)
+            },
+            _=>{
+                format!("server error")
+            }
         };
 
-        let body = Body { 
-            success: true, 
-            message: "User Request Successfull".to_string(), 
-            data:data
-        };  
-
-        let length = body.message().as_bytes().len();
-
-        let header_lines = ResponseHeaderLines::new(
-            String::from("Close"),
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-            length,
-            content_type.to_string(),
-        );
-
-        let response = Response::new(
-            status_line,
-            header_lines,
-            "\r\n\r\n",
-            body
-        );
-
-        response.message()
-
+        res
     }
     
 
+}
+
+pub fn html_content(content:String)->String{
+    use chrono::Local;
+
+    use crate::response::response::response::{
+        StatusLine,
+        StatusMessage,
+        HtmlHeadersResponse,
+        HtmlResponse,
+        ResponseMessage
+    };
+
+    let html_response_header = HtmlHeadersResponse::new(
+        String::from("Close"),
+     Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+     content.as_bytes().len(),
+      "text/html".to_string()
+    );
+    let status_line = StatusLine::new(
+        String::from("HTTP/1.1"), 
+        200, 
+        StatusMessage::Ok,
+    );
+    
+    let html_response = HtmlResponse::new(status_line, html_response_header);
+    
+    html_response.message()
+    
+}
+
+
+pub fn json_content(content:String)->String{
+
+    use chrono::Local;
+
+    use crate::response::response::response::{
+        StatusLine,
+        StatusMessage,
+        Response,
+        ResponseData,
+        ResponseHeaderLines,
+        ResponseMessage,
+        Body,
+    };
+
+    let status_line = StatusLine::new(
+            String::from("HTTP/1.1"), 
+            200, 
+            StatusMessage::Ok,
+            );
+
+
+
+            let content = content;
+
+            let data = ResponseData{
+                data:content,
+            };
+
+            let body = Body { 
+                success: true, 
+                message: "User Request Successfull".to_string(), 
+                data:data
+            };  
+
+            let length = body.message().as_bytes().len();
+
+            let header_lines = ResponseHeaderLines::new(
+                String::from("Close"),
+                Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                length,
+                "application/json".to_string(),
+            );
+
+            let response = Response::new(
+                status_line,
+                header_lines,
+                "\r\n\r\n",
+                body
+            );
+
+            response.message()
 }

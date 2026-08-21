@@ -1,4 +1,3 @@
-use core::error;
 use std::net::{TcpListener, TcpStream};
 use std::io::{self, BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
@@ -6,6 +5,9 @@ use std::fs::{File};
 use response::content_type::content_type::ContentyType;
 use response::response::response::{response};
 use request::request_error::request_error::HttpError;
+use request::request::request::request;
+use request::data_decoding::data_decoding::data_extraction;
+
 
 mod request;
 mod response;
@@ -16,7 +18,6 @@ fn main()->Result<()>{
     
     for stream in litstener.incoming(){
 
-
         let stream = tcp_stream(stream);
 
         let mut stream = match stream {
@@ -26,8 +27,6 @@ fn main()->Result<()>{
                 continue;
             }
         };
-
-
 
         let buffer_values = buffer(&mut stream);
 
@@ -42,9 +41,7 @@ fn main()->Result<()>{
         let buffer = buffer_val.0;
         let bytes = buffer_val.1;
 
-        let data_info =  request::request::request::request(buffer, bytes);
-
-        println!("{:?}",data_info);
+        let data_info = request(buffer, bytes);
 
         match data_info {
             Ok(data)=>match data.get("method").map(|v| v.as_str()){
@@ -54,31 +51,37 @@ fn main()->Result<()>{
                     let html_content = match f {
                         Ok(file)=>file,
                         Err(_)=>{
-                            "<h1>Somthing Went Wrong<h1>".to_string()
+                            "<h1>Server Error<h1>".to_string()
                         }
                     };
 
-                    let response = response(&ContentyType::TextHtml.as_str(), html_content);
+                    let response = response(&ContentyType::TextHtml.as_str(),html_content.clone());
 
-                    let _= write(&mut stream, response);
+                    stream.write_all(response.as_bytes());
+                    stream.write_all(&html_content.as_bytes());
 
                 },
                 Some("POST")=>{
 
-                    let content = match data.get("body"){
+                    let user_data = match data.get("body"){
                         Some(val)=>{
-                            println!("{}",val);
-                            val.to_string()
+                            let data = data_extraction(val);
+                            data
                         },
                         None=>{
                            String::new()
                         }
                     };
 
+                    println!("{:?}",user_data);
+                    println!("{:?}",data);
+
+                    let content = user_data;
+
                     let response = response(&ContentyType::ApplicationJSON.as_str(), content);
 
                     
-                    let _= write(&mut stream,response);
+                    stream.write_all(response.as_bytes());
                 },
                 _=>{
                     eprintln!("Does not match with any method");

@@ -41,7 +41,7 @@ pub mod request_header{
                 };
 
                 let values = match values{
-                    Some(v)=>v,
+                    Some(v)=>v.trim(),
                     None=>"",
                 };
                 header.insert(key,values);

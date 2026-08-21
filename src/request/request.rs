@@ -1,17 +1,18 @@
 pub mod request{
     use std::collections::HashMap;
 
-    use crate::request::request_error::RequestError::MessageFormate;
+    use crate::request::request_error::request_error::MessageFormate;
     use crate::request::request_headers::request_header::ParseHeader;
-    use crate::response::content_type::content_type::ContentyType;
+    use crate::request::request_line::request_line::RequestMethod;
+use crate::response::content_type::content_type::ContentyType;
     use super::super::method::method::Method;
-    use super::super::url::URL::URL;
+    use super::super::url::url::URL;
     use super::super::request_headers::request_header::RequestHeaders;
     use super::super::request_line::request_line::RequestLine;
     use super::super::version::Version;
 
-    use super::super::request_error::RequestError::HttpError;
-    use super::super::request_error::RequestError::{ErrorBodyMessage,BadRequestError,BadRequestStatusLine,BadRequestMessage};
+    use super::super::request_error::request_error::HttpError;
+    use super::super::request_error::request_error::{ErrorBodyMessage,BadRequestError,BadRequestStatusLine,BadRequestMessage};
     
 
     pub trait RequestParse {
@@ -120,7 +121,30 @@ pub mod request{
         let header_lines = RequestHeaders::new(header_lines);
 
 
-        if method.method.as_str() == "POST" && (request_lines.is_empty() || header_lines.header.is_empty() || data_str.len() == 0) {
+        let requested_content_type = match header_lines.header.get("Content-Type"){
+            Some(cnt_type)=>{
+                let find_semicolone = match cnt_type.find(";"){
+                    Some(ind) =>ind,
+                    None=>cnt_type.len(),
+                };
+
+                match cnt_type.get(0..find_semicolone) {
+                    Some(val)=>val.to_string(),
+                    None=>"".to_string(),
+                }
+            },
+            None=>"".to_string()
+        };
+
+        if requested_content_type == "application/x-www-form-urlencoded".to_string(){
+            // println!("{:?}",header_lines.header);
+            // println!("{:?}",header_lines.header.get("body"));
+        }
+
+        // println!("{}",requested_content_type);
+
+
+        if  request_lines.is_empty() || header_lines.header.is_empty() {
             return Err(
                 HttpError::BadRequestError(bad_req.msg(body))
             );
@@ -136,6 +160,8 @@ pub mod request{
             blank_line:"\r\n",
             body,
         };  
+
+        
 
         Ok(requested_format.parse())
 

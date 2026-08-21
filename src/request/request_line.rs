@@ -1,9 +1,12 @@
 pub mod request_line{
 
     use super::super::method::method::Method;
-    use super::super::url::URL::URL;
+    use super::super::url::url::URL;
 
 
+    pub trait RequestMethod {
+        fn method(&self)->String;
+    }
 
     #[derive(Debug)]
     pub struct RequestLine<'a>{
@@ -13,11 +16,17 @@ pub mod request_line{
     }
 
  
-
     impl<'a> RequestLine<'a> {
         pub fn new(method:&'a Method,url:URL<'a>,version: &'a str)->Self{
             RequestLine { method, url, version }
         }
     }
+
+    impl<'a> RequestMethod for RequestLine<'a> {
+        fn method(&self)->String {
+            format!("{}",self.method.method.as_str())
+        }
+    }
+
 
 }
