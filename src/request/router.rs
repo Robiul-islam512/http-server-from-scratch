@@ -4,30 +4,109 @@ pub mod router{
     use std::io::{BufRead, BufReader};
     use chrono::Local;
     
-    use crate::response::response::response::{HtmlHeadersResponse, HtmlResponse, ResponseMessage, StatusLine, StatusMessage};
+    use crate::response::response::response::{
+        HtmlHeadersResponse, 
+        HtmlResponse, 
+        ResponseMessage, 
+        StatusLine, 
+        StatusMessage,
+        Response,
+        ResponseData,
+        ResponseHeaderLines,
+        Body
+       
+    };
     use crate::request::request_error::request_error::HttpError;
+    use crate::request::data_decoding::data_decoding::data_extraction;
 
-    pub trait RouteWiseResponse{
+    pub trait GetRouteWiseResponse{
         fn get(&self)->std::result::Result<(String,String),Box<dyn std::error::Error>>;
+    }
 
-        // fn post(&self)->std::result::Result<(String,String),Box<dyn std::error::Error>>;
-        fn post(&self)->String;
+    pub trait PostRouteWiseResponse{
+         fn post(&self)->std::result::Result<(String,String),Box<dyn std::error::Error>>;
     }
 
     #[derive(Debug)]    
-    pub struct RouterComponents{
+    pub struct GetRouterComponents{
         method:String,
         url:String,
         file_path:String,
     }
 
-    impl RouterComponents {
+    pub struct PostRouterComponents{
+        url:String,
+        content:String,
+    }
+
+    impl GetRouterComponents {
         pub fn new(method:String,url_path:String,file_path:String)->Self{
-            RouterComponents { method, url:url_path,file_path }
+            GetRouterComponents { method, url:url_path,file_path }
         }
     }
 
-    impl RouteWiseResponse for RouterComponents {
+    impl PostRouterComponents{
+         pub fn new(url_path:String,content:String)->Self{
+            PostRouterComponents { url:url_path, content }
+        }
+    }
+
+    impl PostRouteWiseResponse for PostRouterComponents {
+        fn post(&self)->std::result::Result<(String,String),Box<dyn std::error::Error>> {
+
+            let status_line = StatusLine::new(
+            String::from("HTTP/1.1"), 
+            200, 
+            StatusMessage::Ok,
+            );
+
+
+
+            let content = self.content.clone();
+
+            let data = ResponseData{
+                data:content,
+            };
+
+            let body = Body { 
+                success: true, 
+                message: "User Request Successfull".to_string(), 
+                data
+            };  
+
+            let length = body.message().as_bytes().len();
+
+            let header_lines = ResponseHeaderLines::new(
+                String::from("Close"),
+                Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                length,
+                "application/json".to_string(),
+            );
+
+            let response = Response::new(
+                status_line,
+                header_lines,
+                "\r\n\r\n",
+                body
+            );  
+
+            println!("Big {:?}",response);
+
+             match self.url.as_str() {
+                "/register"=>{
+                    Ok((response.message(),"".to_string()))
+                },
+                _=>{
+                    return Err(
+                        Box::new(HttpError::BadRequestError("post request route path doesn't matched".to_string()))
+                    );
+                }
+            }
+        }
+    }
+
+
+    impl GetRouteWiseResponse for GetRouterComponents {
         fn get(&self)->std::result::Result<(String,String),Box<dyn std::error::Error>>{
             
             let main_file = File::open(self.file_path.as_str());
@@ -80,40 +159,30 @@ pub mod router{
                 },
                 _=>{
                     return Err(
-                        Box::new(HttpError::BadRequestError("route doesn't matched".to_string()))
+                        Box::new(HttpError::BadRequestError("route path doesn't matched".to_string()))
                     );
                 }
             }
             
         }
-
-        // fn post(&self)->std::result::Result<(String,String),Box<dyn std::error::Error>> {}
-        fn post(&self)->String {
-            "".to_string()
-        }
-
-        // fn post(&self)->Result<(String,String),Box<dyn std::error::Error>> {}
     }
 
-    pub fn router(method:&str,url_path:String,file_path:String)->std::result::Result<(String,String),Box<dyn std::error::Error>>{
-        
+    pub fn post_router(url_path:String,content:String)->std::result::Result<(String,String),Box<dyn std::error::Error>>{
+        let components = PostRouterComponents::new(
+            url_path, 
+            content
+        );
 
-        match method {
-            "GET"=>{
-                let components = RouterComponents::new(
-                    method.to_string(), 
-                    url_path.clone(),
-                    file_path,  
-                );
+        components.post()
+    }
 
-                components.get()
-            }
-            _=>{
-                Ok(("".to_string(),"".to_string()))
-            }
-        }
+    pub fn get_router(method:&str,url_path:String,file_path:String)->std::result::Result<(String,String),Box<dyn std::error::Error>>{
 
-        
-        
+        let components = GetRouterComponents::new(
+            method.to_string(), 
+            url_path.clone(),
+            file_path,  
+        );
+        components.get()
     }
 }

@@ -92,7 +92,7 @@ pub mod data_decoding{
             password,
         );
 
-      let mut users = match users_data("data.json"){
+      let mut users = match users_data("register.json"){
             Ok(all_users)=>all_users,
             Err(e)=>{
                 eprintln!("JSON File Extraction Error: {}",e);
@@ -111,7 +111,7 @@ pub mod data_decoding{
             }
         }; 
 
-        fs::write("data.json", users_json_data);
+        fs::write("register.json", users_json_data);
 
        user_registration.data()
 

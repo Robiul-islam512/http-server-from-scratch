@@ -7,7 +7,7 @@ use response::response::response::{response};
 use request::request_error::request_error::HttpError;
 use request::request::request::request;
 use request::data_decoding::data_decoding::data_extraction;
-use request::router::router::router;
+use request::router::router::{get_router,post_router};
 
 
 mod request;
@@ -81,14 +81,24 @@ fn main()->Result<()>{
                         }
                     };
 
-                    println!("{:?}",user_data);
-                    println!("{:?}",data);
-
                     let content = user_data;
 
-                    let response = response(&ContentyType::ApplicationJSON.as_str(), content);
+                    let url_path = match data.get("url"){
+                        Some(path)=>path.to_string(),
+                        None=>"/".to_string(),
+                    };                  
 
-                    
+                    let response = match post_router(url_path,content){
+                        Ok(res_data)=>{
+                            res_data
+                        },
+                        Err(e)=>{
+                            eprintln!("Post Requeste Error: {}",e);
+                            ("".to_string(),"".to_string())
+                        }
+                    };
+
+                    stream.write_all(response.0.as_bytes());                    
                     
                 },
                 _=>{
@@ -108,7 +118,7 @@ fn main()->Result<()>{
 }
 
 fn get_response(url_path:String,path:String,stream:&mut TcpStream){
-    let response =  match router("GET",url_path,path){
+    let response =  match get_router("GET",url_path,path){
         Ok(values)=>values,
         Err(e)=>{
             eprintln!("Route Matching Error: {}",e);
