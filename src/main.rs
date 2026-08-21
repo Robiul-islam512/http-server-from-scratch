@@ -7,6 +7,7 @@ use response::response::response::{response};
 use request::request_error::request_error::HttpError;
 use request::request::request::request;
 use request::data_decoding::data_decoding::data_extraction;
+use request::router::router::router;
 
 
 mod request;
@@ -46,22 +47,27 @@ fn main()->Result<()>{
         match data_info {
             Ok(data)=>match data.get("method").map(|v| v.as_str()){
                 Some("GET")=>{
-                    let f = file("index.html");
 
-                    let html_content = match f {
-                        Ok(file)=>file,
-                        Err(_)=>{
-                            "<h1>Server Error<h1>".to_string()
-                        }
+                    let url_path = match data.get("url"){
+                        Some(path)=>path.to_string(),
+                        None=>"/".to_string(),
                     };
 
-                    let response = response(&ContentyType::TextHtml.as_str(),html_content.clone());
-
-                    // println!("{}",response);
-                    println!("{:?}",data);
-                    stream.write_all(response.as_bytes());  
-                    stream.write_all(&html_content.as_bytes());
-
+                    if url_path == "/".to_string(){
+                        get_response(url_path,"index.html".to_string(),&mut stream);
+                        
+                    }
+                    else if url_path == "/register".to_string(){
+                        get_response(url_path,"register.html".to_string(),&mut stream);
+                        
+                    }
+                    else if url_path == "/login".to_string(){
+                        get_response(url_path,"login.html".to_string(),&mut stream);
+                        
+                    }                    
+                    else if url_path == "/todo".to_string(){
+                        get_response(url_path,"todo.html".to_string(),&mut stream);  
+                    }
                 },
                 Some("POST")=>{
 
@@ -83,7 +89,7 @@ fn main()->Result<()>{
                     let response = response(&ContentyType::ApplicationJSON.as_str(), content);
 
                     
-                    stream.write_all(response.as_bytes());
+                    
                 },
                 _=>{
                     eprintln!("Does not match with any method");
@@ -101,7 +107,21 @@ fn main()->Result<()>{
     Ok(())
 }
 
+fn get_response(url_path:String,path:String,stream:&mut TcpStream){
+    let response =  match router("GET",url_path,path){
+        Ok(values)=>values,
+        Err(e)=>{
+            eprintln!("Route Matching Error: {}",e);
+            ("".to_string(),"".to_string())
+        }
+    };
 
+    println!("{:?}",response);
+
+    stream.write_all(response.0.as_bytes());
+    stream.write_all(response.1.as_bytes());
+
+}
 
 fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpError>{
     match stream {

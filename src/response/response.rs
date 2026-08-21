@@ -111,6 +111,7 @@ pub mod response{
         }
     }
 
+    #[derive(Debug)]
     pub struct HtmlHeadersResponse{
         connection:String,
         date:String,
