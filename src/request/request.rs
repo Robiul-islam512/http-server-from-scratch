@@ -3,8 +3,7 @@ pub mod request{
 
     use crate::request::request_error::request_error::MessageFormate;
     use crate::request::request_headers::request_header::ParseHeader;
-    use crate::request::request_line::request_line::RequestMethod;
-use crate::response::content_type::content_type::ContentyType;
+    use crate::response::content_type::content_type::ContentyType;
     use super::super::method::method::Method;
     use super::super::url::url::URL;
     use super::super::request_headers::request_header::RequestHeaders;

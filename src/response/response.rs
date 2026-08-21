@@ -99,7 +99,8 @@ pub mod response{
         fn message(&self)->String {
             let status_line = &self.status_line;
             let body = self.body.message();
-        
+            
+            println!("Body: {}",body);
 
             return format!("{} {} {}\r\nConnection: {}\r\nDate: {}\r\nContent-Length: {}\r\nContent-Type: {}\r\n\r\n{}",status_line.version,status_line.status_code,status_line.message.msg(),
               self.header_lines.connection,
@@ -238,7 +239,7 @@ pub fn json_content(content:String)->String{
             let body = Body { 
                 success: true, 
                 message: "User Request Successfull".to_string(), 
-                data:data
+                data
             };  
 
             let length = body.message().as_bytes().len();

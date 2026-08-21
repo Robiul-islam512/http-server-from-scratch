@@ -1,19 +1,24 @@
 pub mod data_decoding{
 
-    use serde::Serialize;
-    use std::fs::write;
+    use serde::{Deserialize, Serialize};
+    use std::fs;
 
     pub trait ExtractedData {
         fn data(&self)->String;
     }
 
-
-    #[derive(Debug,Serialize)]
+    #[derive(Debug,Serialize,Deserialize,Clone)]
     pub struct Registration{
         name:String,
         email:String,
         password:String,
     }   
+
+    impl Registration {
+        fn new(name:String,email:String,password:String)->Self{
+            Registration { name, email, password }
+        }
+    }
 
     impl ExtractedData for Registration {
         fn data(&self)->String {
@@ -81,17 +86,22 @@ pub mod data_decoding{
             None=>"".to_string()
         };
 
-        let user_registration = Registration{
+        let user_registration = Registration::new(
             name,
             email,
             password,
+        );
+
+      let mut users = match users_data("data.json"){
+            Ok(all_users)=>all_users,
+            Err(e)=>{
+                eprintln!("JSON File Extraction Error: {}",e);
+                Vec::new()
+            }
         };
+        users.push(user_registration.clone());
 
-        let users:Vec<String> = Vec::new();
-
-        
-
-        let user_json_data = match serde_json::to_string_pretty(&user_registration){
+      let users_json_data = match serde_json::to_string_pretty(&users){
             Ok(val)=>{
                 val
             },
@@ -99,14 +109,21 @@ pub mod data_decoding{
                 eprintln!("Somthing went while json parsing.");
                 "".to_string()
             }
-        };
+        }; 
 
+        fs::write("data.json", users_json_data);
 
-        write("data.json", user_json_data);
+       user_registration.data()
 
+    }
 
+    fn users_data(file_name:&str)->std::result::Result<Vec<Registration>,Box<dyn std::error::Error>>{
+        
+        let read_to_string = fs::read_to_string(file_name)?;
 
-        user_registration.data()
+        let users:Vec<Registration> = serde_json::from_str(&read_to_string)?;
+
+        Ok(users)
 
     }
 

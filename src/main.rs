@@ -57,7 +57,9 @@ fn main()->Result<()>{
 
                     let response = response(&ContentyType::TextHtml.as_str(),html_content.clone());
 
-                    stream.write_all(response.as_bytes());
+                    // println!("{}",response);
+                    println!("{:?}",data);
+                    stream.write_all(response.as_bytes());  
                     stream.write_all(&html_content.as_bytes());
 
                 },
