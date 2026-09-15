@@ -3,7 +3,6 @@ use std::io::{self, BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
 
 use response::content_type::content_type::ContentyType;
-use response::response::response::{response};
 use request::request_error::request_error::HttpError;
 use request::request::request::request;
 use request::data_decoding::data_decoding::data_extraction;
@@ -12,6 +11,7 @@ use request::router::router::{get_router,post_router};
 
 mod request;
 mod response;
+mod errors;
 
 
 fn main()->Result<()>{
@@ -53,21 +53,26 @@ fn main()->Result<()>{
                         None=>"/".to_string(),
                     };
 
-                    if url_path == "/".to_string(){
-                        get_response(url_path,"index.html".to_string(),&mut stream);
-                        
-                    }
-                    else if url_path == "/register".to_string(){
-                        get_response(url_path,"register.html".to_string(),&mut stream);
-                        
-                    }
-                    else if url_path == "/login".to_string(){
-                        get_response(url_path,"login.html".to_string(),&mut stream);
-                        
-                    }                    
-                    else if url_path == "/todo".to_string(){
-                        get_response(url_path,"todo.html".to_string(),&mut stream);  
-                    }
+                    let route_content = get_router("GET", url_path, "index.html".to_string());
+
+                    let content = match route_content {
+                        Ok(content)=>{
+                            content
+                            // println!("{} {}",content.0,content.1);
+                        },
+                        Err(_)=>{
+                            ("".to_string(),"".to_string())
+                            // println!("Something wrong with routing content!");
+                        }
+                    };  
+
+                    println!("{} {}",&content.0,&content.1);
+
+                    stream.write_all(content.0.as_bytes());
+                    stream.write_all(content.1.as_bytes());
+
+                    // println!("{:?}",get_router("GET", url_path, "index.html".to_string()));
+                    
                 },
                 Some("POST")=>{
 

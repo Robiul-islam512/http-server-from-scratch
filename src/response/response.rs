@@ -9,15 +9,15 @@ pub mod response{
 
     #[derive(Debug)]
     pub enum StatusMessage{
-        Ok,//200
-        BadRequest,//400
+        Ok,
+        BadRequest,
     }   
 
     impl StatusMessage {
         pub fn msg(&self)->String{
             match self {
-                Self::Ok=>"OK".to_string(),
-                Self::BadRequest=>"Bad Request".to_string(),
+                Self::Ok=>"OK 200".to_string(),
+                Self::BadRequest=>"Bad Request 400".to_string(),
             }
         }
     }   
@@ -100,8 +100,6 @@ pub mod response{
             let status_line = &self.status_line;
             let body = self.body.message();
             
-            println!("Body: {}",body);
-
             return format!("{} {} {}\r\nConnection: {}\r\nDate: {}\r\nContent-Length: {}\r\nContent-Type: {}\r\n\r\n{}",status_line.version,status_line.status_code,status_line.message.msg(),
               self.header_lines.connection,
               self.header_lines.date,
@@ -140,13 +138,12 @@ pub mod response{
 
     impl ResponseMessage for HtmlResponse {
         fn message(&self)->String {
-            format!("{} {} {}\r\n\
+            format!("{} {}\r\n\
             Connection: {}\r\n\
             Date: {}\r\n\
             Content-Length: {}\r\n\
             Content-Type: {}\r\n\r\n",
             self.status_line.version,
-            self.status_line.status_code,
             self.status_line.message.msg(),
               self.header_lines.connection,
               self.header_lines.date,
@@ -156,108 +153,87 @@ pub mod response{
         }
     }
 
-
-    pub fn response(content_type:&str,content:String)->String{
-    
-        use crate::response::response::{json_content,html_content};
-
-        let res =  match content_type {
-            "application/json"=>{
-                json_content(content)
-            },
-            "text/html"=>{
-                html_content(content)
-            },
-            _=>{
-                format!("server error")
-            }
-        };
-
-        res
-    }
-    
-
 }
 
-pub fn html_content(content:String)->String{
-    use chrono::Local;
+// pub fn html_content(content:String)->String{
+//     use chrono::Local;
 
-    use crate::response::response::response::{
-        StatusLine,
-        StatusMessage,
-        HtmlHeadersResponse,
-        HtmlResponse,
-        ResponseMessage
-    };
+//     use crate::response::response::response::{
+//         StatusLine,
+//         StatusMessage,
+//         HtmlHeadersResponse,
+//         HtmlResponse,
+//         ResponseMessage
+//     };
 
-    let html_response_header = HtmlHeadersResponse::new(
-        String::from("Close"),
-     Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-     content.as_bytes().len(),
-      "text/html".to_string()
-    );
-    let status_line = StatusLine::new(
-        String::from("HTTP/1.1"), 
-        200, 
-        StatusMessage::Ok,
-    );
+//     let html_response_header = HtmlHeadersResponse::new(
+//         String::from("Close"),
+//      Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+//      content.as_bytes().len(),
+//       "text/html".to_string()
+//     );
+//     let status_line = StatusLine::new(
+//         String::from("HTTP/1.1"), 
+//         200, 
+//         StatusMessage::Ok,
+//     );
     
-    let html_response = HtmlResponse::new(status_line, html_response_header);
+//     let html_response = HtmlResponse::new(status_line, html_response_header);
     
-    html_response.message()
+//     html_response.message()
     
-}
+// }
 
 
-pub fn json_content(content:String)->String{
+// pub fn json_content(content:String)->String{
 
-    use chrono::Local;
+//     use chrono::Local;
 
-    use crate::response::response::response::{
-        StatusLine,
-        StatusMessage,
-        Response,
-        ResponseData,
-        ResponseHeaderLines,
-        ResponseMessage,
-        Body,
-    };
+//     use crate::response::response::response::{
+//         StatusLine,
+//         StatusMessage,
+//         Response,
+//         ResponseData,
+//         ResponseHeaderLines,
+//         ResponseMessage,
+//         Body,
+//     };
 
-    let status_line = StatusLine::new(
-            String::from("HTTP/1.1"), 
-            200, 
-            StatusMessage::Ok,
-            );
+//     let status_line = StatusLine::new(
+//             String::from("HTTP/1.1"), 
+//             200, 
+//             StatusMessage::Ok,
+//             );
 
 
 
-            let content = content;
+//             let content = content;
 
-            let data = ResponseData{
-                data:content,
-            };
+//             let data = ResponseData{
+//                 data:content,
+//             };
 
-            let body = Body { 
-                success: true, 
-                message: "User Request Successfull".to_string(), 
-                data
-            };  
+//             let body = Body { 
+//                 success: true, 
+//                 message: "User Request Successfull".to_string(), 
+//                 data
+//             };  
 
-            let length = body.message().as_bytes().len();
+//             let length = body.message().as_bytes().len();
 
-            let header_lines = ResponseHeaderLines::new(
-                String::from("Close"),
-                Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-                length,
-                "application/json".to_string(),
-            );
+//             let header_lines = ResponseHeaderLines::new(
+//                 String::from("Close"),
+//                 Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+//                 length,
+//                 "application/json".to_string(),
+//             );
 
-            let response = Response::new(
-                status_line,
-                header_lines,
-                "\r\n\r\n",
-                body
-            );
+//             let response = Response::new(
+//                 status_line,
+//                 header_lines,
+//                 "\r\n\r\n",
+//                 body
+//             );
 
-            response.message()
-}
+//             response.message()
+// }

@@ -7,3 +7,4 @@ pub mod version;
 pub mod request_error;
 pub mod data_decoding;
 pub mod router;
+pub mod data_purified;

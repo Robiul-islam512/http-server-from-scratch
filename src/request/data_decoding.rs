@@ -81,7 +81,7 @@ pub mod data_decoding{
                     Some(i)=>i,
                     None=>0,
                 };
-                pass[ind+1..pass.len()-1].to_string()
+                pass[ind+1..pass.len()-1].trim().to_string()
             },
             None=>"".to_string()
         };

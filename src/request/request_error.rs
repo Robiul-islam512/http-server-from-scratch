@@ -37,6 +37,7 @@ pub mod request_error{
         BadRequestError(String),
         FailedToSerialize(String),
         ServerError(String),
+        NotFound(String)
     }
 
     impl fmt::Display for HttpError{
@@ -45,6 +46,7 @@ pub mod request_error{
                 HttpError::BadRequestError(msg)=>write!(f,"{}",msg),
                 HttpError::FailedToSerialize(msg)=>write!(f, "Failed to serialize: {}",msg),
                 HttpError::ServerError(msg)=>write!(f,"Internal Server Error: {}",msg),
+                HttpError::NotFound(msg)=>write!(f,"")
             }
         }
     }

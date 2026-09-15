@@ -4,7 +4,8 @@ pub mod router{
     use std::io::{BufRead, BufReader};
     use chrono::Local;
     
-    use crate::response::response::response::{
+    use crate::get_response;
+use crate::response::response::response::{
         HtmlHeadersResponse, 
         HtmlResponse, 
         ResponseMessage, 
@@ -14,8 +15,10 @@ pub mod router{
         ResponseData,
         ResponseHeaderLines,
         Body
-       
     };
+
+    use crate::response::content_type::content_type::ContentyType;
+
     use crate::request::request_error::request_error::HttpError;
     use crate::request::data_decoding::data_decoding::data_extraction;
 
@@ -34,6 +37,7 @@ pub mod router{
         file_path:String,
     }
 
+    #[derive(Debug)]
     pub struct PostRouterComponents{
         url:String,
         content:String,
@@ -80,7 +84,7 @@ pub mod router{
                 String::from("Close"),
                 Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
                 length,
-                "application/json".to_string(),
+                ContentyType::ApplicationJSON.as_str()
             );
 
             let response = Response::new(
@@ -173,6 +177,8 @@ pub mod router{
             content
         );
 
+        println!("{:?}",components);
+
         components.post()
     }
 
@@ -183,6 +189,39 @@ pub mod router{
             url_path.clone(),
             file_path,  
         );
+
+        //  if url_path == "/".to_string(){
+                    //     get_response(url_path,"index.html".to_string(),&mut stream);
+                        
+                    // }
+                    // else if url_path == "/register".to_string(){
+                    //     get_response(url_path,"register.html".to_string(),&mut stream);
+                        
+                    // }
+                    // else if url_path == "/login".to_string(){
+                    //     get_response(url_path,"login.html".to_string(),&mut stream);
+                        
+                    // }                    
+                    // else if url_path == "/todo".to_string(){
+                    //     get_response(url_path,"todo.html".to_string(),&mut stream);  
+                    // }
+
+        // let route =  match url_path.as_str() {
+        //     "/"=>"index.html",
+        //     "/register"=>"register.html",
+        //     "/login"=>"login.html",
+        //     "/todo"=>"todo.html",
+        //     _=>{
+        //         "<h1>No such route found</h2>"
+        //     }
+        // };
+
         components.get()
     }
+
+    // fn get_route_content(route:&str)->String{
+
+    // }
+
+
 }
