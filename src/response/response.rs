@@ -16,7 +16,7 @@ pub mod response{
     impl StatusMessage {
         pub fn msg(&self)->String{
             match self {
-                Self::Ok=>"OK 200".to_string(),
+                Self::Ok=>"OK".to_string(),
                 Self::BadRequest=>"Bad Request 400".to_string(),
             }
         }
@@ -128,27 +128,31 @@ pub mod response{
     pub struct HtmlResponse{
         status_line:StatusLine,
         header_lines:HtmlHeadersResponse,
+        body:String,
     }
 
     impl HtmlResponse {
-        pub fn new(status_line:StatusLine,header_lines:HtmlHeadersResponse)->Self{
-            Self { status_line, header_lines }
+        pub fn new(status_line:StatusLine,header_lines:HtmlHeadersResponse,body:String)->Self{
+            Self { status_line, header_lines,body }
         }
     }
 
     impl ResponseMessage for HtmlResponse {
         fn message(&self)->String {
-            format!("{} {}\r\n\
+            let content_length = self.body.as_bytes().len();
+            format!("{} {} {}\r\n\
             Connection: {}\r\n\
             Date: {}\r\n\
             Content-Length: {}\r\n\
-            Content-Type: {}\r\n\r\n",
+            Content-Type: {}\r\n\r\n{}",
             self.status_line.version,
+            self.status_line.status_code,
             self.status_line.message.msg(),
               self.header_lines.connection,
               self.header_lines.date,
-              self.header_lines.content_length,
+              content_length,
               self.header_lines.content_type,
+              self.body
             )
         }
     }

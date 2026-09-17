@@ -146,7 +146,7 @@ use crate::response::response::response::{
             );
             
 
-            let html_response = HtmlResponse::new(status_line, html_response_header);
+            let html_response = HtmlResponse::new(status_line, html_response_header,"".to_string());
 
             match self.url.as_str() {
                 "/"=>{

@@ -7,11 +7,14 @@ use request::request_error::request_error::HttpError;
 use request::request::request::request;
 use request::data_decoding::data_decoding::data_extraction;
 use request::router::router::{get_router,post_router};
+use router::get::get_request::{get_route_file_path,get
+};
 
 
 mod request;
 mod response;
 mod errors;
+mod router;
 
 
 fn main()->Result<()>{
@@ -48,28 +51,47 @@ fn main()->Result<()>{
             Ok(data)=>match data.get("method").map(|v| v.as_str()){
                 Some("GET")=>{
 
+                    
+
                     let url_path = match data.get("url"){
                         Some(path)=>path.to_string(),
                         None=>"/".to_string(),
                     };
 
-                    let route_content = get_router("GET", url_path, "index.html".to_string());
+                    let file_path = get_route_file_path(&url_path);
 
-                    let content = match route_content {
-                        Ok(content)=>{
-                            content
-                            // println!("{} {}",content.0,content.1);
-                        },
+                    let content = match file(&file_path){
+                        Ok(cnt) =>cnt,
                         Err(_)=>{
-                            ("".to_string(),"".to_string())
-                            // println!("Something wrong with routing content!");
+                            "<h1>path not found</h1>".to_string()
                         }
-                    };  
+                    };
 
-                    println!("{} {}",&content.0,&content.1);
+                    // println!("{}",file_path);
+                    // println!("{}",get(&content));
+                    stream.write_all(get(&content).as_bytes());
+                    // stream.write_all(content.as_bytes());
 
-                    stream.write_all(content.0.as_bytes());
-                    stream.write_all(content.1.as_bytes());
+                    // let 
+
+
+                    // let route_content = get_router("GET", url_path, "index.html".to_string());
+
+                    // let content = match route_content {
+                    //     Ok(content)=>{
+                    //         content
+                    //         // println!("{} {}",content.0,content.1);
+                    //     },
+                    //     Err(_)=>{
+                    //         ("".to_string(),"".to_string())
+                    //         // println!("Something wrong with routing content!");
+                    //     }
+                    // };  
+
+                    // println!("{} {}",&content.0,&content.1);
+
+                    // stream.write_all(content.0.as_bytes());
+                    // stream.write_all(content.1.as_bytes());
 
                     // println!("{:?}",get_router("GET", url_path, "index.html".to_string()));
                     

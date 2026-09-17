@@ -1,5 +1,4 @@
 pub mod request{
-    use std::borrow::Cow::{self, Borrowed};
 use std::collections::HashMap;
     use std::fs::File;
     use std::io::{BufRead, BufReader};
@@ -8,7 +7,8 @@ use std::collections::HashMap;
 
     use crate::request::request_error::request_error::MessageFormate;
     use crate::request::request_headers::request_header::ParseHeader;
-    use crate::response::content_type::content_type::ContentyType;
+    use crate::response::content_type;
+use crate::response::content_type::content_type::ContentyType;
     use super::super::method::method::Method;
     use super::super::url::url::URL;
     use super::super::request_headers::request_header::RequestHeaders;
@@ -28,17 +28,41 @@ use std::collections::HashMap;
         fn parse(&self)->HashMap<String,String>;
     }
 
+    pub trait BodyStringfy<'a> {
+        fn body_as_str(&self,content_type:&'a str)->String;
+    }
+
+
     #[derive(Debug)]
     struct EntityBody{
-        body:String,
+        body:(String,HashMap<String,String>),
+    }   
+
+    impl<'a> BodyStringfy<'a> for EntityBody {
+        fn body_as_str(&self,content_type:&'a str)->String {
+            if content_type == "application/x-www-form-urlencoded".to_string(){
+                let mut str_res = String::new();
+                println!("{:?}",self.body.1);
+                for (k,v) in &self.body.1{
+                    str_res.push_str(&format!("{}: {}",k,v).to_string());
+                }
+                
+                return str_res;
+            }
+            else if content_type == "application/json".to_string(){
+                return self.body.0.clone();
+            }
+            self.body.0.clone()
+        }
     }
+
 
     #[derive(Debug)]
     struct RequestFormat<'a>{
         request_line:RequestLine<'a>,
         header_lines:RequestHeaders<'a>,
         blank_line:&'a str,
-        body:EntityBody,
+        body:String,
     }
 
     impl<'a> RequestParse for RequestFormat<'a> {
@@ -48,7 +72,7 @@ use std::collections::HashMap;
             content.insert("method".to_string(),format!("{}",self.request_line.method.method.as_str()));
             content.insert("url".to_string(), format!("{}",self.request_line.url.url));
             content.insert("header".to_string(), format!("{:?}",self.header_lines.parse()));
-            content.insert("body".to_string(), format!("{:?}",self.body.body.trim()));
+            content.insert("body".to_string(), format!("{:?}",self.body));
 
             content
         }
@@ -77,14 +101,6 @@ use std::collections::HashMap;
             Some(i )=>i+4,
             None=>bytes,
         };
-
-        let data = match organized_data( buffer.get(data_starting_ind..)){
-            Some(d)=>d,
-            None=>("".to_string(),HashMap::new())
-        };
-
-        
-        println!("Data {:?}",data);
 
 
         let request_lines =  requested_data.get(0);
@@ -124,15 +140,10 @@ use std::collections::HashMap;
             &err_msg_str
         );
 
-
-        
-
         let _404_ = match not_found_404("404.html"){
             Ok(val )=>val,
             Err(_)=>"<h1>Not Found</h1>".to_string(),
         };
-
-
 
 
         let not_found = NotFound::new(
@@ -142,31 +153,6 @@ use std::collections::HashMap;
             _404_.as_bytes().len(),
             _404_
         );
-
-
-        // let bad_req_status_line = BadRequestStatusLine{
-        //     http_version:"HTTP/1.1".to_string(),
-        //     status_code:400,
-        //     request:"Bad Request".to_string(),
-        // };
-       
-        // let error_msg = ErrorBodyMessage{
-        //     error:"Bad Request".to_string(),
-        //     message:"Request body could not be read properly.".to_string(),
-        // };  
-
-        // let body = match serde_json::to_string(&error_msg){
-        //     Ok(val)=>val,
-        //     Err(e)=>"".to_string()
-        // };
-
-        // let bad_req = BadRequestError{
-        //     status_line:bad_req_status_line.message(),
-        //     content_type:ContentyType::ApplicationJSON.as_str(),
-        //     content_length:body.as_bytes().len(),
-        //     body:error_msg,
-        // };
-        
        
 
         let mut request_line =  request_lines.split(" ");
@@ -197,23 +183,27 @@ use std::collections::HashMap;
             },
             None=>"".to_string()
         };
-
-        if requested_content_type == "application/x-www-form-urlencoded".to_string(){
-            // println!("{:?}",header_lines.header);
-            // println!("{:?}",header_lines.header.get("body"));
-        }
-
-        // println!("{}",requested_content_type);
-
-
-
         
+        // println!("content_type: {:?}",header_lines.header.get("\nContent-Type"));
 
-        if data_str.is_empty(){
+        let requested_content_type = match header_lines.header.get("\nContent-Type"){
+            Some(cnt_type)=>cnt_type,
+            None=>"application/json",
+        };
+
+
+        let actual_data = match organized_data( requested_content_type,buffer.get(data_starting_ind..)){
+            Some(d)=>d,
+            None=>("".to_string(),HashMap::new())
+        };
+
+
+        if requested_content_type == "application/json" && actual_data.0.is_empty(){
             return Err(
                 HttpErrors::BadRequest(bad_req.bad_request_format())
             );
         }
+            
 
         if  request_lines.is_empty() || header_lines.header.is_empty() {
             return Err(
@@ -222,18 +212,18 @@ use std::collections::HashMap;
         }
 
         let body = EntityBody{
-            body:data_str,
+            body:actual_data,
         };
+
+        let body_content = body.body_as_str(&requested_content_type);
 
         let requested_format = RequestFormat{
             request_line,
             header_lines,
             blank_line:"\r\n",
-            body,
+            body:body_content,
         };  
-
         
-
         Ok(requested_format.parse())
 
     }
