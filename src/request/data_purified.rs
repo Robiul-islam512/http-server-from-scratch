@@ -69,7 +69,6 @@ pub mod data_purified{
                 }
 
             }
-            println!("d:{}",d);
 
             for line in d.lines(){  
                 let line = line.trim();
@@ -98,7 +97,6 @@ pub mod data_purified{
             Some(v)=>{
                     
                 let mut values:Vec<char> = v.chars().collect();
-                println!("{:?}",values);
 
                 if values.first() == Some(&'\"'){
                      values.remove(0);

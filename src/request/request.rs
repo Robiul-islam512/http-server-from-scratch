@@ -128,14 +128,15 @@ use crate::response::content_type::content_type::ContentyType;
             Some(d)=>d,
             None=>HashMap::new()
         };
-
-
+    
         if requested_content_type == "application/json" && actual_data.is_empty(){
             return Err(
                 HttpErrors::BadRequest(bad_req.bad_request_format())
             );
         }
             
+
+        
 
         if  request_lines.is_empty() || header_lines.header.is_empty() {
             return Err(
@@ -173,7 +174,7 @@ use crate::response::content_type::content_type::ContentyType;
     pub fn requeste_content_type<'a>(request_header:&'a RequestHeaders)->&'a str{
         match request_header.header.get("\nContent-Type"){
             Some(cnt_type)=>cnt_type,
-            None=>"application/json",
+            None=>"",
         }
     }
 
