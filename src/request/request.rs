@@ -30,29 +30,22 @@ use crate::response::content_type::content_type::ContentyType;
     }
 
     pub trait BodyStringfy<'a> {
-        fn body_as_str(&self,content_type:&'a str)->String;
+        fn body_as_str(&self)->String;
     }
 
 
     #[derive(Debug)]
     pub struct EntityBody{
-        body:(String,HashMap<String,String>),
+        body:HashMap<String,String>
     }   
 
     impl<'a> BodyStringfy<'a> for EntityBody {
-        fn body_as_str(&self,content_type:&'a str)->String {
-            if content_type == "application/x-www-form-urlencoded".to_string(){
-                let mut str_res = String::new();
-                for (k,v) in &self.body.1{
-                    str_res.push_str(&format!("{}: {}",k,v).to_string());
-                }
-                
-                return str_res;
-            }
-            else if content_type == "application/json".to_string(){
-                return self.body.0.clone();
-            }
-            self.body.0.clone()
+        fn body_as_str(&self)->String {
+            let mut str_res = String::new();
+            for (k,v) in &self.body{
+                str_res.push_str(&format!("{}: {}",k,v).to_string());
+            }              
+            str_res
         }
     }
 
@@ -79,47 +72,21 @@ use crate::response::content_type::content_type::ContentyType;
     }
     
     pub fn request(buffer:[u8;4096],bytes:usize)->Result<HashMap<String,String>,HttpErrors>{
-        let mut requested_data:Vec<String> = Vec::new();
 
-        let mut data_str = String::new();
-
-        let mut data = String::new();
-
-        for i in 0..bytes{
-            if i<bytes && buffer[i] != 13 && buffer[i+1] !=10 {
-                data_str.push(buffer[i] as char);
-            }
-            if buffer[i] == 13{
-                requested_data.push(data_str);
-                data_str = String::new();
-            }
-
-            data.push(buffer[i] as char);
-        } 
-
-        let data_starting_ind = match data.find("\r\n\r\n"){
-            Some(i )=>i+4,
-            None=>bytes,
-        };
+        let data = data_fetch(buffer, bytes).0;
+        let requested_data = data_fetch(buffer, bytes).1;
 
 
-        let request_lines =  requested_data.get(0);
+        // println!("data str: {}",data);
+        // println!("req data: {:?}",requested_data);
 
-        let header_lines =  if requested_data.len()>2{
-            requested_data.get(1..requested_data.len()-1)
-        }else{
-           None
-        };
 
-        let request_lines = match request_lines {
-            Some(line)=>line,
-            None=>"",
-        };
+        let data_starting_ind = body_starting_index(&data,bytes);
 
-        let header_lines = match header_lines {
-            Some(headers)=>headers,
-            None=>&["".to_string()],
-        };
+
+        let request_lines =  request_lines(&requested_data);
+
+        let header_lines = header_lines(&requested_data);
 
          let error_msg = ErrorMessage{
             error:"Bad Request".to_string(),
@@ -139,22 +106,7 @@ use crate::response::content_type::content_type::ContentyType;
             err_msg_str.as_bytes().len(),
             &err_msg_str
         );
-
-        let _404_ = match not_found_404("404.html"){
-            Ok(val )=>val,
-            Err(_)=>"<h1>Not Found</h1>".to_string(),
-        };
-
-
-        let not_found = NotFound::new(
-           "HTTP/1.1 400 Bad Request".to_string(),
-            ContentyType::ApplicationJSON.as_str(), 
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(), 
-            _404_.as_bytes().len(),
-            _404_
-        );
        
-
         let mut request_line =  request_lines.split(" ");
         
         let method_option = request_line.next();
@@ -169,36 +121,16 @@ use crate::response::content_type::content_type::ContentyType;
         let header_lines = RequestHeaders::new(header_lines);
 
 
-        let requested_content_type = match header_lines.header.get("Content-Type"){
-            Some(cnt_type)=>{
-                let find_semicolone = match cnt_type.find(";"){
-                    Some(ind) =>ind,
-                    None=>cnt_type.len(),
-                };
-
-                match cnt_type.get(0..find_semicolone) {
-                    Some(val)=>val.to_string(),
-                    None=>"".to_string(),
-                }
-            },
-            None=>"".to_string()
-        };
-        
-        // println!("content_type: {:?}",header_lines.header.get("\nContent-Type"));
-
-        let requested_content_type = match header_lines.header.get("\nContent-Type"){
-            Some(cnt_type)=>cnt_type,
-            None=>"application/json",
-        };
+        let requested_content_type = requeste_content_type(&header_lines);
 
 
         let actual_data = match organized_data( requested_content_type,buffer.get(data_starting_ind..)){
             Some(d)=>d,
-            None=>("".to_string(),HashMap::new())
+            None=>HashMap::new()
         };
 
 
-        if requested_content_type == "application/json" && actual_data.0.is_empty(){
+        if requested_content_type == "application/json" && actual_data.is_empty(){
             return Err(
                 HttpErrors::BadRequest(bad_req.bad_request_format())
             );
@@ -215,7 +147,7 @@ use crate::response::content_type::content_type::ContentyType;
             body:actual_data,
         };
 
-        let body_content = body.body_as_str(&requested_content_type);
+        let body_content = body.body_as_str();
 
 
         let requested_format = RequestFormat{
@@ -225,10 +157,66 @@ use crate::response::content_type::content_type::ContentyType;
             body:body_content,
         };  
         
-        let x = post(&requested_format,&buffer,data,bytes);
+        // let x = post(&requested_format,buffer,bytes);
 
         Ok(requested_format.parse())
 
+    }
+
+    pub fn body_starting_index(data:&String,bytes:usize)->usize{
+        match data.find("\r\n\r\n"){
+            Some(i )=>i+4,
+            None=>bytes,
+        }
+    }
+
+    pub fn requeste_content_type<'a>(request_header:&'a RequestHeaders)->&'a str{
+        match request_header.header.get("\nContent-Type"){
+            Some(cnt_type)=>cnt_type,
+            None=>"application/json",
+        }
+    }
+
+    pub fn header_lines<'a>(requested_data:&'a Vec<String>)->&'a [String]{
+        let header_lines =  if requested_data.len()>2{
+            requested_data.get(1..requested_data.len()-1)
+        }else{
+           None
+        };
+
+        match header_lines {
+            Some(headers)=>headers,
+            None=>&[]
+        }
+    }
+
+    pub fn request_lines(requested_data:&Vec<String>)->&str{
+        let request_lines =  requested_data.get(0);
+        match request_lines {
+            Some(line)=>line,
+            None=>"",
+        }
+    }
+
+    pub fn data_fetch(buffer:[u8;4096],bytes:usize)->(String,Vec<String>){
+        let mut requested_data:Vec<String> = Vec::new();
+
+        let mut data_str = String::new();
+
+        let mut data = String::new();
+
+        for i in 0..bytes{
+            if i<bytes && buffer[i] != 13 && buffer[i+1] !=10 {
+                data_str.push(buffer[i] as char);
+            }
+            if buffer[i] == 13{
+                requested_data.push(data_str);
+                data_str = String::new();
+            }
+
+            data.push(buffer[i] as char);
+        } 
+        (data,requested_data)
     }
 
     pub fn file(file_name:&str)->std::io::Result<String>{

@@ -5,6 +5,7 @@ pub mod post_request{
     use chrono::Local;
     
     use crate::request::request::request::RequestFormat;
+    use crate::request::request_headers::request_header::RequestHeaders;
     use crate::router::get::get_request::get_route_file_path;
     use crate::request::data_purified::data_purified::organized_data;
     use crate::request::request::request::file;
@@ -12,6 +13,7 @@ pub mod post_request{
     use std::error::Error;
     use crate::errors::not_found_error404::not_found::NotFound;
     use crate::response::content_type::content_type::ContentyType;
+    use crate::request::request::request::{data_fetch,header_lines,requeste_content_type,body_starting_index};
    
 
     #[derive(Debug,Deserialize,Default)]    
@@ -23,38 +25,39 @@ pub mod post_request{
 
 
     
-    pub fn post<'a>(requested_data:&RequestFormat,buffer:&[u8],data:String,bytes:usize)->std::result::Result<String,HttpErrors>{
-       
-        let url = get_route_file_path(&requested_data.request_line.url.url());
+    pub fn post<'a>(data_map:&HashMap<String,String>,buffer:[u8;4096],bytes:usize)->std::result::Result<String,HttpErrors>{
+        
+        let url_path = url_path(data_map);
+        
+        let url = get_route_file_path(&url_path);
 
-        let conetent_type = match &requested_data.header_lines.header.get("\nContent-Type"){
-            Some(cnt_type)=>cnt_type.to_string(),
-            None=>"application/json".to_string()
-        };
+        let data = data_fetch(buffer, bytes);
+        let header_lines = header_lines(&data.1);
 
-        let data_starting_ind = match data.find("\r\n\r\n"){
-            Some(i )=>i+4,
-            None=>bytes,
-        };  
+        let header_lines = RequestHeaders::new(header_lines);
+        let content_type = requeste_content_type(&header_lines);
 
-        let org_map_data = match organized_data(&conetent_type, buffer.get(data_starting_ind..)){
+        let body_starting_ind = body_starting_index(&data.0,bytes);
+
+        let org_map_data = match organized_data(&content_type, buffer.get(body_starting_ind..)){
             Some(data)=>data,
-            None=>("".to_string(),HashMap::new())
+            None=>HashMap::new()
         };
 
         if  url == "register.html".to_string(){
-           let response = match register(&org_map_data.1){
+           let response = match register(&org_map_data){
             Ok(res)=>res,
             Err(e)=>{
                 eprintln!("{}",e);
-                
+                "".to_lowercase()
             }
            };
-           println!("res: {}",response);
         } 
         
         Ok("".to_string())
     }
+
+    // pub fn url_path()
 
     pub fn register<'a>(body:&HashMap<String,String>)->std::result::Result<String,HttpErrors>{
         let name = get_map_value(body, "name");
@@ -107,6 +110,13 @@ pub mod post_request{
         (msg,is_missing)
     }
 
+    fn url_path(data_map:&HashMap<String,String>)->String{
+        match data_map.get("url"){
+            Some(path)=>path.to_string(),
+            None=>"/".to_string(),
+        }
+    }
+
     pub fn get_map_value<'a>(body:&HashMap<String,String>,key:&'a str)->String{
         match body.get(key) {
             Some(v)=>v.to_string(),
@@ -123,6 +133,8 @@ pub mod post_request{
         ]);
 
         let x =  register(&testing_map);
+
+        // let post = post(requested_data, buffer, data, bytes);
 
         println!("{:?}",x);
 

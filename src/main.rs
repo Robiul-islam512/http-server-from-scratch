@@ -72,10 +72,11 @@ fn main()->Result<()>{
                 },
                 Some("POST")=>{
 
-                    let url_path = url_path(&data);
+                    let x = post(&data, buffer, bytes);
 
+                    let url_path = url_path(&data); 
 
-                    println!("data: {:?}",data);
+                    
 
                     let user_data = match data.get("body"){
                         Some(val)=>{
@@ -138,8 +139,6 @@ fn get_response(url_path:String,path:String,stream:&mut TcpStream){
             ("".to_string(),"".to_string())
         }
     };
-
-    println!("{:?}",response);
 
     stream.write_all(response.0.as_bytes());
     stream.write_all(response.1.as_bytes());
