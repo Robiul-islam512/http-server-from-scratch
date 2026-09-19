@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::net::{TcpListener, TcpStream};
 use std::io::{self, BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
@@ -9,6 +10,7 @@ use request::data_decoding::data_decoding::data_extraction;
 use request::router::router::{get_router,post_router};
 use router::get::get_request::{get_route_file_path,get
 };
+use router::post::post_request::post;
 
 
 mod request;
@@ -50,9 +52,7 @@ fn main()->Result<()>{
         match data_info {
             Ok(data)=>match data.get("method").map(|v| v.as_str()){
                 Some("GET")=>{
-
                     
-
                     let url_path = match data.get("url"){
                         Some(path)=>path.to_string(),
                         None=>"/".to_string(),
@@ -63,40 +63,19 @@ fn main()->Result<()>{
                     let content = match file(&file_path){
                         Ok(cnt) =>cnt,
                         Err(_)=>{
-                            "<h1>path not found</h1>".to_string()
+                            "<h1>Invalid Path</h1>".to_string()
                         }
                     };
 
-                    // println!("{}",file_path);
-                    // println!("{}",get(&content));
-                    stream.write_all(get(&content).as_bytes());
-                    // stream.write_all(content.as_bytes());
-
-                    // let 
-
-
-                    // let route_content = get_router("GET", url_path, "index.html".to_string());
-
-                    // let content = match route_content {
-                    //     Ok(content)=>{
-                    //         content
-                    //         // println!("{} {}",content.0,content.1);
-                    //     },
-                    //     Err(_)=>{
-                    //         ("".to_string(),"".to_string())
-                    //         // println!("Something wrong with routing content!");
-                    //     }
-                    // };  
-
-                    // println!("{} {}",&content.0,&content.1);
-
-                    // stream.write_all(content.0.as_bytes());
-                    // stream.write_all(content.1.as_bytes());
-
-                    // println!("{:?}",get_router("GET", url_path, "index.html".to_string()));
+                    let _ = stream.write_all(get(&content).as_bytes());
                     
                 },
                 Some("POST")=>{
+
+                    let url_path = url_path(&data);
+
+
+                    println!("data: {:?}",data);
 
                     let user_data = match data.get("body"){
                         Some(val)=>{
@@ -144,6 +123,13 @@ fn main()->Result<()>{
     Ok(())
 }
 
+fn url_path(map_data:&HashMap<String,String>)->String{
+    match map_data.get("url"){
+        Some(path)=>path.to_string(),
+        None=>"/".to_string(),
+    }                  
+}
+
 fn get_response(url_path:String,path:String,stream:&mut TcpStream){
     let response =  match get_router("GET",url_path,path){
         Ok(values)=>values,
@@ -160,7 +146,7 @@ fn get_response(url_path:String,path:String,stream:&mut TcpStream){
 
 }
 
-fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpError>{
+pub fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpError>{
     match stream {
         Ok(strm)=>Ok(strm),
         Err(e)=>{

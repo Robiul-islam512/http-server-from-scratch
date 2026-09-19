@@ -94,7 +94,7 @@ use crate::response::response::response::{
                 body
             );  
 
-            println!("Big {:?}",response);
+            // println!("Big {:?}",response);
 
              match self.url.as_str() {
                 "/register"=>{
@@ -177,7 +177,7 @@ use crate::response::response::response::{
             content
         );
 
-        println!("{:?}",components);
+        // println!("{:?}",components);
 
         components.post()
     }

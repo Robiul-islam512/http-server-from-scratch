@@ -14,6 +14,9 @@ pub mod url{
             };
             URL { url }
         }
+        pub fn url(&self)->String{
+            format!("{}",self.url)
+        }
     }
 
 }

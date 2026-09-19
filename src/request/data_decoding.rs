@@ -31,6 +31,15 @@ pub mod data_decoding{
     }
 
 
+    pub fn data_decoding<'a>(request_data:&'a str)->String{
+
+        let symbols:Vec<(&str, &str)> = vec![("%40","@"),("%21","!"),("%20"," "),("%2B","+"),("%3D","="),("%26","&"),("%2F","/"),("%3F","?"),("%23","#"),("%5B","["),("%5D","]"),("%7B","{"),("%7D","}"),("%7C","|"),("%5E","^"),("%7E","~"),("%60","`"),("%3A",":"),("%3B",";"),("%27","'"),("%2C",","),("%3C","<"),("%3E",">"),("%25","%"),("%24","$"),("%28","("),("%29",")"),("%2A","*"),("%2D","-"),("%2E","."),("%5F","_")];
+
+        let decoded_str = requested_data(0, symbols, request_data);
+
+        decoded_str
+    }
+
     pub fn data_extraction<'a>(request_data:&'a str)->String{
 
         

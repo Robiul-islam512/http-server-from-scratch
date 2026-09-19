@@ -1,7 +1,10 @@
 pub mod data_purified{
     use std::collections::HashMap;
+    use serde::Serialize;
 
-use serde::Serialize;
+    use crate::request::data_decoding::data_decoding::data_decoding;
+    use crate::router::post::post_request::post;
+
 
     pub fn organized_data<'a>(content_type:&'a str,u8_data:Option<&[u8]>)->Option<(String,HashMap<String,String>)>{
         let mut map_data:HashMap<String,String> = HashMap::new(); 
@@ -12,6 +15,9 @@ use serde::Serialize;
             None=>"".to_string()
         };  
 
+        let data = data_decoding(&data);
+
+        
         if content_type =="multipart/form-data" || content_type =="application/x-www-form-urlencoded" {
             let data_chars:Vec<char> = data.chars().collect();
             
@@ -52,6 +58,10 @@ use serde::Serialize;
 
             }
         }
+
+
+
+        // println!("map: {:?}",map_data);
 
         Some((data,map_data))
 

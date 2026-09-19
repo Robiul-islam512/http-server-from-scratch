@@ -41,10 +41,16 @@ pub mod get_request{
                 break;
             }
         }
-        let route:String = route.chars().rev().collect();
-        if route.len() == 0{
-            return "home.html".to_string();
+
+        if route_path.contains(".html"){
+            let route:String = route.chars().rev().collect();
+            return route;
         }
+
+        if route.len() == 0{
+            return "index.html".to_string();
+        }
+        let route:String = route.chars().rev().collect();
         format!("{}.html",route)
     }
 

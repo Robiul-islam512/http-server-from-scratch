@@ -1,38 +1,372 @@
+
+
+<!-- vibe coded -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rust Http server</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #1d1d1d;
-        }
-        h1{
-            background-color: red;
-            color: white;
-            padding: 20px;
-            margin: 0;
-            text-align: center;
-        }
-        p{
-            text-align: center;
-            color: white;
-            font-size: 18px;
-        }
-     
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tick — get it done, line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E9E6DC;
+    --paper-raised:#F1EEE3;
+    --ink:#24261F;
+    --ink-soft:#5B5B4E;
+    --rule:#C9C2AC;
+    --check:#3F6B4F;
+    --check-soft:#DCE6DD;
+    --brick:#B54834;
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-font-smoothing:antialiased;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Source Serif 4', Georgia, serif;
+    line-height:1.6;
+  }
+
+  .mono{
+    font-family:'JetBrains Mono', 'Courier New', monospace;
+  }
+
+  a{color:inherit;}
+
+  /* ---------- Layout shell: notebook margin rule ---------- */
+  .sheet{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 32px 0 72px;
+    position:relative;
+  }
+  .sheet::before{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:40px;
+    width:1px;
+    background:var(--rule);
+  }
+  .sheet::after{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:36px;
+    width:1px;
+    background:var(--brick);
+    opacity:0.55;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    padding:36px 0 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:24px;
+  }
+  .wordmark{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:1.15rem;
+    letter-spacing:0.02em;
+  }
+  .wordmark span{color:var(--check);}
+
+  nav{
+    display:flex;
+    gap:28px;
+    align-items:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.9rem;
+  }
+  nav a{
+    text-decoration:none;
+    color:var(--ink-soft);
+    border-bottom:1px solid transparent;
+    padding-bottom:2px;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  nav a:hover, nav a:focus-visible{
+    color:var(--ink);
+    border-bottom-color:var(--ink);
+  }
+  nav a.cta{
+    color:var(--paper);
+    background:var(--ink);
+    padding:8px 16px;
+    border-radius:2px;
+    border-bottom:none;
+  }
+  nav a.cta:hover, nav a.cta:focus-visible{
+    background:var(--check);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding:56px 0 48px;
+  }
+  .hero h1{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:clamp(1.9rem, 4vw, 2.7rem);
+    line-height:1.35;
+    margin:0 0 20px;
+    max-width:14ch;
+  }
+  .hero h1 .cursor{
+    display:inline-block;
+    width:0.55ch;
+    background:var(--check);
+    margin-left:2px;
+    animation:blink 1.1s step-end infinite;
+  }
+  @keyframes blink{
+    50%{opacity:0;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .hero h1 .cursor{animation:none;}
+  }
+
+  .hero p{
+    max-width:46ch;
+    color:var(--ink-soft);
+    font-size:1.08rem;
+    margin:0 0 32px;
+  }
+
+  .hero-actions{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.92rem;
+    text-decoration:none;
+    padding:12px 22px;
+    border-radius:2px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .btn-primary{
+    background:var(--check);
+    color:var(--paper-raised);
+  }
+  .btn-primary:hover, .btn-primary:focus-visible{
+    background:#345c42;
+  }
+  .btn-ghost{
+    color:var(--ink);
+    border:1px solid var(--rule);
+    background:transparent;
+  }
+  .btn-ghost:hover, .btn-ghost:focus-visible{
+    border-color:var(--ink);
+  }
+
+  /* ---------- Task preview (the characteristic hero object) ---------- */
+  .list-card{
+    margin-top:48px;
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:3px;
+    padding:8px 0;
+    max-width:520px;
+  }
+  .task{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    padding:13px 22px;
+    border-bottom:1px solid var(--rule);
+    font-size:0.98rem;
+  }
+  .task:last-child{border-bottom:none;}
+  .box{
+    width:16px;
+    height:16px;
+    border:1.5px solid var(--ink-soft);
+    border-radius:2px;
+    flex-shrink:0;
+    margin-top:3px;
+    position:relative;
+  }
+  .box.done{
+    background:var(--check);
+    border-color:var(--check);
+  }
+  .box.done::after{
+    content:"";
+    position:absolute;
+    left:3px;
+    top:0px;
+    width:4px;
+    height:8px;
+    border-right:2px solid var(--paper-raised);
+    border-bottom:2px solid var(--paper-raised);
+    transform:rotate(45deg);
+  }
+  .task.done span{
+    color:var(--ink-soft);
+    text-decoration:line-through;
+    text-decoration-color:var(--rule);
+  }
+
+  /* ---------- Section: how it works ---------- */
+  section{
+    padding:44px 0;
+    border-top:1px solid var(--rule);
+  }
+  section h2{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:1.3rem;
+    margin:0 0 28px;
+  }
+
+  .steps{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:22px;
+  }
+  .steps li{
+    display:flex;
+    gap:16px;
+    max-width:62ch;
+  }
+  .steps .box{
+    margin-top:5px;
+  }
+  .steps strong{
+    display:block;
+    margin-bottom:3px;
+  }
+  .steps p{
+    margin:0;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- Footer / final CTA ---------- */
+  footer{
+    padding:48px 0 64px;
+    border-top:1px solid var(--rule);
+  }
+  footer .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:20px;
+  }
+  footer h2{
+    font-family:'JetBrains Mono', monospace;
+    font-size:1.2rem;
+    margin:0;
+    max-width:28ch;
+  }
+  footer small{
+    display:block;
+    margin-top:36px;
+    color:var(--ink-soft);
+    font-size:0.82rem;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 640px){
+    .sheet{padding:0 20px 0 44px;}
+    .sheet::before{left:24px;}
+    .sheet::after{left:20px;}
+    header{flex-direction:column;align-items:flex-start;gap:16px;}
+    nav{flex-wrap:wrap;}
+    footer .row{flex-direction:column;align-items:flex-start;}
+  }
+
+  :focus-visible{
+    outline:2px solid var(--check);
+    outline-offset:2px;
+  }
+</style>
 </head>
 <body>
-    <h1>Welcome to Todo List Application</h1>
-    <p>This is a simple Todo List application built with Rust and Warp.</p>
-    <p>Before starting, make sure you have to Registered.</p>
-    <a href="/register">Register here</a>
 
+<div class="sheet">
+
+  <header>
+    <div class="wordmark">tick<span>.</span></div>
+    <nav>
+      <a href="login.html">Log in</a>
+      <a href="register.html" class="cta">Register</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <h1>Nothing gets<br>forgotten twice<span class="cursor"></span></h1>
+    <p>Tick is a plain to-do list for people who'd rather write a task down once than think about it five times. No boards, no points, no notifications you didn't ask for.</p>
+    <div class="hero-actions">
+      <a href="register.html" class="btn btn-primary">Create your list</a>
+      <a href="login.html" class="btn btn-ghost">I already have one</a>
+    </div>
+
+    <div class="list-card" aria-hidden="true">
+      <div class="task done"><div class="box done"></div><span>Reply to the landlord</span></div>
+      <div class="task done"><div class="box done"></div><span>Book dentist for Thursday</span></div>
+      <div class="task"><div class="box"></div><span>Draft the quarterly notes</span></div>
+      <div class="task"><div class="box"></div><span>Call mum back</span></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>How it works</h2>
+    <ul class="steps">
+      <li>
+        <div class="box"></div>
+        <div>
+          <strong>Write the task the way you'd say it</strong>
+          <p>No tags, no priority levels to argue with yourself over. Type it, hit enter, move on.</p>
+        </div>
+      </li>
+      <li>
+        <div class="box"></div>
+        <div>
+          <strong>Check it off when it's done</strong>
+          <p>Finished items move to the bottom with a line through them, so today's list only shows what's left.</p>
+        </div>
+      </li>
+      <li>
+        <div class="box"></div>
+        <div>
+          <strong>Come back tomorrow to the same list</strong>
+          <p>Your account keeps everything in sync, so the list is the same whether you open it on your phone or your laptop.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    <div class="row">
+      <h2>Start a list in under a minute</h2>
+      <div class="hero-actions">
+        <a href="register" class="btn btn-primary">Register</a>
+        <a href="login" class="btn btn-ghost">Log in</a>
+      </div>
+    </div>
+    <small>tick — a to-do list, nothing more</small>
+  </footer>
+
+</div>
 
 </body>
-
 </html>

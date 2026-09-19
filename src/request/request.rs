@@ -22,6 +22,7 @@ use crate::response::content_type::content_type::ContentyType;
     use crate::errors::not_found_error404::not_found::{NotFound};
     use crate::request::request::request::file as not_found_404;
     use crate::request::data_purified::data_purified::organized_data;
+    use crate::router::post::post_request::post;
 
 
     pub trait RequestParse {
@@ -34,7 +35,7 @@ use crate::response::content_type::content_type::ContentyType;
 
 
     #[derive(Debug)]
-    struct EntityBody{
+    pub struct EntityBody{
         body:(String,HashMap<String,String>),
     }   
 
@@ -42,7 +43,6 @@ use crate::response::content_type::content_type::ContentyType;
         fn body_as_str(&self,content_type:&'a str)->String {
             if content_type == "application/x-www-form-urlencoded".to_string(){
                 let mut str_res = String::new();
-                println!("{:?}",self.body.1);
                 for (k,v) in &self.body.1{
                     str_res.push_str(&format!("{}: {}",k,v).to_string());
                 }
@@ -58,11 +58,11 @@ use crate::response::content_type::content_type::ContentyType;
 
 
     #[derive(Debug)]
-    struct RequestFormat<'a>{
-        request_line:RequestLine<'a>,
-        header_lines:RequestHeaders<'a>,
-        blank_line:&'a str,
-        body:String,
+    pub struct RequestFormat<'a>{
+        pub request_line:RequestLine<'a>,
+        pub header_lines:RequestHeaders<'a>,
+        pub blank_line:&'a str,
+        pub body:String,
     }
 
     impl<'a> RequestParse for RequestFormat<'a> {
@@ -217,6 +217,7 @@ use crate::response::content_type::content_type::ContentyType;
 
         let body_content = body.body_as_str(&requested_content_type);
 
+
         let requested_format = RequestFormat{
             request_line,
             header_lines,
@@ -224,6 +225,8 @@ use crate::response::content_type::content_type::ContentyType;
             body:body_content,
         };  
         
+        let x = post(&requested_format,&buffer,data,bytes);
+
         Ok(requested_format.parse())
 
     }
