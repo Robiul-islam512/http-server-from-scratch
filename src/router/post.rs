@@ -1,42 +1,19 @@
 pub mod post_request{
     use std::collections::HashMap;
-use std::fmt::format;
-    use serde::{Deserialize, Serialize};
-    use chrono::Local;
     use std::fs;
     
-    use crate::errors::bad_request400::bad_request::BadRequestFormat;
-use crate::request::request_headers::request_header::RequestHeaders;
+
+    use crate::request::request_headers::request_header::RequestHeaders;
     use crate::router::get::get_request::get_route_file_path;
     use crate::request::data_purified::data_purified::organized_data;
-    use crate::request::request::request::file;
     use crate::errors::errors::errors::HttpErrors;
-    use crate::errors::not_found_error404::not_found::{NotFound, NotFoundSummarize};
-    use crate::errors::server_error::server_error::ServerError;
-    use crate::response::content_type::content_type::ContentyType;
     use crate::request::request::request::{data_fetch,header_lines,requeste_content_type,body_starting_index};
     use crate::request::request_error::request_error::ErrorBodyMessage;
-    use crate::errors::conflict::conflict::ConflictError;
-    use crate::response::response::response::{
-        Response, ResponseData, ResponseHeaderLines, ResponseMessage, StatusLine, StatusMessage,Body
+    use crate::components::{
+        register::register::{register,User},
+        login::login::login,
     };
 
-    #[derive(Debug,Deserialize,Default,Serialize,Clone)]    
-    pub struct User{
-        name:String,
-        email:String,
-        password:String,
-    }
-
-    impl User {
-        pub fn get_user_info(&self)->String{
-           format!(
-            r#"{{"name":"{}","email":"{}"}}"#,
-            self.name,
-            self.password
-            )
-        }
-    }
 
 
 
@@ -60,139 +37,15 @@ use crate::request::request_headers::request_header::RequestHeaders;
             None=>HashMap::new()
         };
 
-        if  url == "register.html".to_string(){
+        if  url.to_lowercase() == "register.html".to_string(){
             return register(&org_map_data);
            
         } 
+        else if url.to_lowercase() == "login.html".to_string(){
+            return login(&org_map_data);
+        }
         
         Ok("".to_string())
-    }
-
-    // pub fn url_path()
-
-    pub fn register<'a>(body:&HashMap<String,String>)->std::result::Result<String,HttpErrors>{
-        let name = get_map_value(body, "name");
-        let email = get_map_value(body, "email");
-        let password = get_map_value(body, "password");
-
-        let fields:Vec<(&str,&str)> = vec![("name",&name),("email",&email),("password",&password)];
-
-        let missign_fields_status = missing_fields(fields);
-
-        let _404_ = missign_fields_status.0;
-
-
-        let not_found = NotFound::new(
-           "HTTP/1.1 404 Not Found".to_string(),
-            ContentyType::ApplicationJSON.as_str(), 
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(), 
-            _404_.as_bytes().len(),
-            _404_
-        );
-        
-
-        let server_error_msg = error_msg("Server Error".to_string(),"Server facing error while fetching data from DB".to_string());
-
-        let server_error = ServerError::new(
-            "HTTP/1.1 500 Server Error".to_string(), 
-            ContentyType::ApplicationJSON.as_str(), 
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(), 
-            server_error_msg.as_bytes().len(), 
-            server_error_msg
-        );
-
-        let conflict_msg = error_msg("User Conflict".to_string(), "User Alread Exists.Try new one".to_string());
-
-        let user_conflict = ConflictError::new(
-             "HTTP/1.1 404 Server Error".to_string(), 
-            ContentyType::ApplicationJSON.as_str(), 
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(), 
-            conflict_msg.as_bytes().len(), 
-            conflict_msg
-        );
-      
-
-        if missign_fields_status.1 == true{
-            return Err(
-                HttpErrors::NotFound(not_found.msg())
-            );
-        }  
-
-        let new_user:User = User { name, email, password };
-
-        let mut users = match users_data("register.json"){
-            Ok(users)=>users,
-            Err(_)=>{
-                return Err(
-                    HttpErrors::ServerError(server_error.msg())
-                );
-            }
-        };  
-
-        println!("{:?}",users);
-
-
-        let is_user_already_exists = alread_exists(&new_user,&users);
-
-        if is_user_already_exists == true{
-            return Err(
-                HttpErrors::ConflictError(user_conflict.msg())
-            );
-        }
-
-        users.push(new_user.clone());
-
-        let users_str = stringify(&users);
-
-
-        let _ = fs::write("register.json", users_str);
-
-        let content = match serde_json::to_string(&new_user){
-            Ok(d)=>d,
-            Err(_)=>"".to_string(),
-        };
-
-        let body = Body{
-            success:true,
-            message:"Registration Successfull".to_string(),
-            data:new_user.get_user_info()
-        };
-
-        let status_msg = StatusLine::new(
-            "HTTP/1.1".to_string(), 
-            200, 
-            StatusMessage::Ok
-        );
-
-        let response_header_line = ResponseHeaderLines::new(
-            "Close".to_string(), 
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(), 
-            body.message().as_bytes().len(), 
-            "application/json".to_string()
-        );
-       
-
-        let response = Response::new(
-            status_msg,
-            response_header_line,
-             "",
-              body.message()
-        );
-
-        // println!("{}",response.message());
-
-
-
-        // println!("{:?}",users);
-
-
-        Ok(response.message())
-
-    }   
-
-
-    pub fn status_line(version:String,status_code:u32,status_msg:StatusMessage)->StatusLine{
-        StatusLine::new(version, status_code, status_msg)
     }
 
     pub fn stringify(users:&Vec<User>)->String{
@@ -235,9 +88,6 @@ use crate::request::request_headers::request_header::RequestHeaders;
             }
         }
 
-         
-       
-
         let msg = format!("You have sent missing or empty data of '{}'",missing_fields);
         (msg,is_missing)
     }
@@ -277,11 +127,7 @@ use crate::request::request_headers::request_header::RequestHeaders;
             ("password".to_string(),"".to_string()),
         ]);
 
-        // let sec_testing_map = 
-
         let x =  register(&testing_map);
-
-        // let post = post(requested_data, buffer, data, bytes);
 
         println!("{:?}",x);
 

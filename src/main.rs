@@ -17,7 +17,7 @@ mod request;
 mod response;
 mod errors;
 mod router;
-
+mod components;
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
@@ -75,6 +75,7 @@ fn main()->Result<()>{
                     let res = match post(&data, buffer, bytes){
                         Ok(res)=>res,
                         Err(e)=>{
+                            eprintln!("{}",e);
                             format!("{}",e)
                         }
                     };
