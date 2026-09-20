@@ -7,7 +7,7 @@ use response::content_type::content_type::ContentyType;
 use request::request_error::request_error::HttpError;
 use request::request::request::request;
 use request::data_decoding::data_decoding::data_extraction;
-use request::router::router::{get_router,post_router};
+// use request::router::router::{get_router,post_router};
 use router::get::get_request::{get_route_file_path,get
 };
 use router::post::post_request::post;
@@ -109,19 +109,19 @@ fn url_path(map_data:&HashMap<String,String>)->String{
     }                  
 }
 
-fn get_response(url_path:String,path:String,stream:&mut TcpStream){
-    let response =  match get_router("GET",url_path,path){
-        Ok(values)=>values,
-        Err(e)=>{
-            eprintln!("Route Matching Error: {}",e);
-            ("".to_string(),"".to_string())
-        }
-    };
+// fn get_response(url_path:String,path:String,stream:&mut TcpStream){
+//     let response =  match get_router("GET",url_path,path){
+//         Ok(values)=>values,
+//         Err(e)=>{
+//             eprintln!("Route Matching Error: {}",e);
+//             ("".to_string(),"".to_string())
+//         }
+//     };
 
-    stream.write_all(response.0.as_bytes());
-    stream.write_all(response.1.as_bytes());
+//     stream.write_all(response.0.as_bytes());
+//     stream.write_all(response.1.as_bytes());
 
-}
+// }
 
 pub fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpError>{
     match stream {

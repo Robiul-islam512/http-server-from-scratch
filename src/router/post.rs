@@ -1,6 +1,7 @@
 pub mod post_request{
     use std::collections::HashMap;
-    use serde::Deserialize;
+use std::fmt::format;
+    use serde::{Deserialize, Serialize};
     use chrono::Local;
     use std::fs;
     
@@ -16,13 +17,27 @@ use crate::request::request_headers::request_header::RequestHeaders;
     use crate::request::request::request::{data_fetch,header_lines,requeste_content_type,body_starting_index};
     use crate::request::request_error::request_error::ErrorBodyMessage;
     use crate::errors::conflict::conflict::ConflictError;
+    use crate::response::response::response::{
+        Response, ResponseData, ResponseHeaderLines, ResponseMessage, StatusLine, StatusMessage,Body
+    };
 
-    #[derive(Debug,Deserialize,Default)]    
+    #[derive(Debug,Deserialize,Default,Serialize,Clone)]    
     pub struct User{
         name:String,
         email:String,
         password:String,
     }
+
+    impl User {
+        pub fn get_user_info(&self)->String{
+           format!(
+            r#"{{"name":"{}","email":"{}"}}"#,
+            self.name,
+            self.password
+            )
+        }
+    }
+
 
 
     
@@ -105,7 +120,7 @@ use crate::request::request_headers::request_header::RequestHeaders;
 
         let new_user:User = User { name, email, password };
 
-        let users = match users_data("registr.json"){
+        let mut users = match users_data("register.json"){
             Ok(users)=>users,
             Err(_)=>{
                 return Err(
@@ -125,11 +140,66 @@ use crate::request::request_headers::request_header::RequestHeaders;
             );
         }
 
-        println!("{:?}",users);
+        users.push(new_user.clone());
+
+        let users_str = stringify(&users);
 
 
-        Ok("".to_string())
+        let _ = fs::write("register.json", users_str);
 
+        let content = match serde_json::to_string(&new_user){
+            Ok(d)=>d,
+            Err(_)=>"".to_string(),
+        };
+
+        let body = Body{
+            success:true,
+            message:"Registration Successfull".to_string(),
+            data:new_user.get_user_info()
+        };
+
+        let status_msg = StatusLine::new(
+            "HTTP/1.1".to_string(), 
+            200, 
+            StatusMessage::Ok
+        );
+
+        let response_header_line = ResponseHeaderLines::new(
+            "Close".to_string(), 
+            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(), 
+            body.message().as_bytes().len(), 
+            "application/json".to_string()
+        );
+       
+
+        let response = Response::new(
+            status_msg,
+            response_header_line,
+             "",
+              body.message()
+        );
+
+        // println!("{}",response.message());
+
+
+
+        // println!("{:?}",users);
+
+
+        Ok(response.message())
+
+    }   
+
+
+    pub fn status_line(version:String,status_code:u32,status_msg:StatusMessage)->StatusLine{
+        StatusLine::new(version, status_code, status_msg)
+    }
+
+    pub fn stringify(users:&Vec<User>)->String{
+         match serde_json::to_string_pretty(users){
+            Ok(cnt)=>cnt,
+            Err(_)=>"".to_string(),
+        }
     }
 
     pub fn alread_exists(new_user:&User,prev_users:&Vec<User>)->bool{
@@ -151,8 +221,6 @@ use crate::request::request_headers::request_header::RequestHeaders;
         Ok(users)
 
     }
-
-    // pub fn already_exists()
 
     pub fn missing_fields<'a>(fileds:Vec<(&str,&str)>)->(String,bool){
         let mut missing_fields = String::new();
