@@ -5,6 +5,9 @@ pub mod errors{
     pub enum HttpErrors {
         NotFound(String),
         BadRequest(String),
+        ServerError(String),
+        ConflictError(String),
+
     }
 
     impl Display for HttpErrors {
@@ -12,6 +15,8 @@ pub mod errors{
             match self {
                 Self::NotFound(msg)=>write!(f,"{}",msg),
                 Self::BadRequest(msg)=>write!(f,"{}",msg),
+                Self::ServerError(msg)=>write!(f,"{}",msg),
+                Self::ConflictError(msg)=>write!(f,"{}",msg),
             }
         }
     }   

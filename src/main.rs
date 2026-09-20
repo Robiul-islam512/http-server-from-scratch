@@ -72,40 +72,18 @@ fn main()->Result<()>{
                 },
                 Some("POST")=>{
 
-                    let x = post(&data, buffer, bytes);
-
-                    let url_path = url_path(&data); 
-
-                    
-
-                    let user_data = match data.get("body"){
-                        Some(val)=>{
-                            let data = data_extraction(val);
-                            data
-                        },
-                        None=>{
-                           String::new()
-                        }
-                    };
-
-                    let content = user_data;
-
-                    let url_path = match data.get("url"){
-                        Some(path)=>path.to_string(),
-                        None=>"/".to_string(),
-                    };                  
-
-                    let response = match post_router(url_path,content){
-                        Ok(res_data)=>{
-                            res_data
-                        },
+                    let res = match post(&data, buffer, bytes){
+                        Ok(res)=>res,
                         Err(e)=>{
-                            eprintln!("Post Requeste Error: {}",e);
-                            ("".to_string(),"".to_string())
+                            format!("{}",e)
                         }
                     };
 
-                    stream.write_all(response.0.as_bytes());                    
+                    println!("response: {}",res); 
+                    
+                    
+                    stream.write_all(res.as_bytes());
+                    
                     
                 },
                 _=>{

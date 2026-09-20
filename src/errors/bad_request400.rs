@@ -3,7 +3,7 @@ pub mod bad_request{
 
     use serde::Serialize;
     pub trait BadRequestFormat {
-        fn bad_request_format(&self)->String;
+        fn msg(&self)->String;
     }
 
     #[derive(Debug,Serialize)]
@@ -27,7 +27,7 @@ pub mod bad_request{
 
 
     impl<'a> BadRequestFormat for BadReuqest<'a> {
-        fn bad_request_format(&self)->String {
+        fn msg(&self)->String {
             format!("{}\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n{}",self.status,self.content_type,self.content_length,self.error_msg)
         }
     }
@@ -57,7 +57,7 @@ pub mod bad_request{
 
         let demo_bad_req = format!("HTTP/1.1 400 Bad Request\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n{}",ContentyType::ApplicationJSON.as_str(),&err_msg_str.as_bytes().len(),&err_msg_str);
 
-        assert_eq!(demo_bad_req,bad_req.bad_request_format());
+        assert_eq!(demo_bad_req,bad_req.msg());
 
     }
 

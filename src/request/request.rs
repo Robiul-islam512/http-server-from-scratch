@@ -3,26 +3,17 @@ use std::collections::HashMap;
     use std::fs::File;
     use std::io::{BufRead, BufReader};
 
-    use chrono::Local;
-
-    use crate::request::request_error::request_error::MessageFormate;
     use crate::request::request_headers::request_header::ParseHeader;
-    use crate::response::content_type;
-use crate::response::content_type::content_type::ContentyType;
+    use crate::response::content_type::content_type::ContentyType;
     use super::super::method::method::Method;
     use super::super::url::url::URL;
     use super::super::request_headers::request_header::RequestHeaders;
     use super::super::request_line::request_line::RequestLine;
     use super::super::version::Version;
 
-    // use super::super::request_error::request_error::HttpError;
-    // use super::super::request_error::request_error::{ErrorBodyMessage,BadRequestError,BadRequestStatusLine,BadRequestMessage};
     use crate::errors::errors::errors::HttpErrors;
     use crate::errors::bad_request400::bad_request::{BadRequestFormat, BadReuqest, ErrorMessage};
-    use crate::errors::not_found_error404::not_found::{NotFound};
-    use crate::request::request::request::file as not_found_404;
     use crate::request::data_purified::data_purified::organized_data;
-    use crate::router::post::post_request::post;
 
 
     pub trait RequestParse {
@@ -76,11 +67,6 @@ use crate::response::content_type::content_type::ContentyType;
         let data = data_fetch(buffer, bytes).0;
         let requested_data = data_fetch(buffer, bytes).1;
 
-
-        // println!("data str: {}",data);
-        // println!("req data: {:?}",requested_data);
-
-
         let data_starting_ind = body_starting_index(&data,bytes);
 
 
@@ -131,16 +117,13 @@ use crate::response::content_type::content_type::ContentyType;
     
         if requested_content_type == "application/json" && actual_data.is_empty(){
             return Err(
-                HttpErrors::BadRequest(bad_req.bad_request_format())
+                HttpErrors::BadRequest(bad_req.msg())
             );
         }
-            
-
-        
 
         if  request_lines.is_empty() || header_lines.header.is_empty() {
             return Err(
-                HttpErrors::BadRequest(bad_req.bad_request_format())
+                HttpErrors::BadRequest(bad_req.msg())
             );
         }
 
