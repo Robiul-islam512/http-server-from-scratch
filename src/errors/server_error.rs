@@ -1,7 +1,5 @@
 pub mod server_error{
 
-    use chrono::Local;
-
     use super::super::bad_request400::bad_request::BadRequestFormat;
 
     pub struct ServerError{
@@ -24,7 +22,7 @@ pub mod server_error{
         }
     }
 
-    
+
 
 
 }

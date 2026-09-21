@@ -25,7 +25,6 @@ use serde::Serialize;
 
     use crate::router::post::post_request::{
         get_map_value,
-        missing_fields,
         users_data,
         error_msg,
     };
@@ -37,9 +36,9 @@ use serde::Serialize;
 
     #[derive(Default,Debug,Serialize)]
     pub struct UserInfo{
-        id:usize,
-        name:String,
-        email:String,
+        pub id:usize,
+        pub name:String,
+        pub email:String,
     }
 
 
@@ -89,6 +88,18 @@ use serde::Serialize;
 
         let login_status = login_logic(&user_login_info, &users);
 
+        let response = serde_json::json!({
+            "success":true,
+            "message":"Logged in Successfull",
+            "data":login_status.0
+        });
+
+        let body = match serde_json::to_string(&response){
+            Ok(data)=>data,
+            Err(_)=>"".to_string(),
+        };
+
+
         if !login_status.1{
             let msg = "Login faild user not found.Please Register first!".to_string();
             let not_found = error_req("not found".to_string(), msg);
@@ -97,34 +108,25 @@ use serde::Serialize;
         }
 
 
-        let user_showing_data = match serde_json::to_string(&login_status.0){
-            Ok(user)=>user,
-            Err(_)=>"user not found".to_string()
-        };
-
-        let response = response_with_current_context(user_showing_data,"Logged In Successfull".to_string());
+        let response = response_with_current_context(body);
 
         Ok(response)
 
     }
 
-    pub fn response_with_current_context(data_body:String,status_msg:String)->String{
-        let body = Body {
-            success: true,
-            message: status_msg,
-            data: data_body.clone()
-        };
+    pub fn response_with_current_context(data_body:String)->String{
+
 
         let status_msg = StatusLine::new("HTTP/1.1".to_string(), 200, StatusMessage::Ok);
 
         let response_header_line = ResponseHeaderLines::new(
             "Close".to_string(),
             Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-            body.message().as_bytes().len(),
+            data_body.as_bytes().len(),
             "application/json".to_string(),
         );
 
-        let response = Response::new(status_msg, response_header_line, "", body.message());
+        let response = Response::new(status_msg, response_header_line, "", data_body);
 
         response.message()
     }

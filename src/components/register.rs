@@ -8,6 +8,7 @@ pub mod register {
     use crate::components::login::login::{
         response_with_current_context,
         error_req,
+        UserInfo,
     };                    
 
     use crate::router::post::post_request::{
@@ -26,6 +27,7 @@ pub mod register {
         pub email:String,
         pub password:String,
     }
+
     impl User {
         pub fn get_user_info(&self)->String{
            format!(
@@ -35,6 +37,8 @@ pub mod register {
             )
         }
     }
+
+
     pub fn register<'a>(body: &HashMap<String, String>) -> std::result::Result<String, HttpErrors> {
         let name = get_map_value(body, "name");
         let email = get_map_value(body, "email");
@@ -81,7 +85,7 @@ pub mod register {
             password,
         };
 
-
+        
         let is_user_already_exists = alread_exists(&new_user, &users);
 
         if is_user_already_exists == true {
@@ -94,9 +98,23 @@ pub mod register {
 
         let _ = fs::write("register.json", users_str);
 
-        let content = new_user.get_user_info();
 
-        let response = response_with_current_context(content, "Registration Successfull".to_string());
+        let response = serde_json::json!({
+            "success":true,
+            "message":"User Registration Successfull",
+            "data":UserInfo{
+                id:new_user.id,
+                name:new_user.name,
+                email:new_user.email
+            }
+        });
+
+        let body = match serde_json::to_string(&response){
+            Ok(d)=>d,
+            Err(_)=>"".to_string()
+        };
+
+        let response = response_with_current_context(body);
 
         
         Ok(response)

@@ -103,26 +103,6 @@ fn main()->Result<()>{
     Ok(())
 }
 
-fn url_path(map_data:&HashMap<String,String>)->String{
-    match map_data.get("url"){
-        Some(path)=>path.to_string(),
-        None=>"/".to_string(),
-    }                  
-}
-
-// fn get_response(url_path:String,path:String,stream:&mut TcpStream){
-//     let response =  match get_router("GET",url_path,path){
-//         Ok(values)=>values,
-//         Err(e)=>{
-//             eprintln!("Route Matching Error: {}",e);
-//             ("".to_string(),"".to_string())
-//         }
-//     };
-
-//     stream.write_all(response.0.as_bytes());
-//     stream.write_all(response.1.as_bytes());
-
-// }
 
 pub fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpError>{
     match stream {
