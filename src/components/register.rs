@@ -1,26 +1,14 @@
 pub mod register {
     use std::collections::HashMap;
     use std::fs;
-    use chrono::Local;
     use serde::{Deserialize,Serialize};
 
-    use crate::response::content_type::content_type::ContentyType;
     use crate::errors::errors::errors::HttpErrors;
-    use crate::errors::{
-        not_found_error404::not_found::{NotFound,NotFoundSummarize},
-        server_error::server_error::{ServerError},
-        conflict::conflict::ConflictError,
-        bad_request400::bad_request::BadRequestFormat,
-    };
-    
-    use crate::response::response::response::{
-        Body,
-        StatusLine,
-        StatusMessage,
-        ResponseHeaderLines,
-        Response,
-        ResponseMessage,
-    };
+
+    use crate::components::login::login::{
+        response_with_current_context,
+        error_req,
+    };                    
 
     use crate::router::post::post_request::{
         get_map_value,
@@ -43,7 +31,7 @@ pub mod register {
            format!(
             r#"{{"name":"{}","email":"{}"}}"#,
             self.name,
-            self.password
+            self.email
             )
         }
     }
@@ -57,50 +45,33 @@ pub mod register {
 
         let missign_fields_status = missing_fields(fields);
 
-        let _404_ = missign_fields_status.0;
+        let _400_ = missign_fields_status.0;
 
-        let not_found = NotFound::new(
-            "HTTP/1.1 404 Not Found".to_string(),
-            ContentyType::ApplicationJSON.as_str(),
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-            _404_.as_bytes().len(),
-            _404_,
-        );
+        let bad_req = error_req("bad req".to_string(), _400_);
+
 
         let server_error_msg = error_msg(
             "Server Error".to_string(),
             "Server facing error while fetching data from DB".to_string(),
         );
 
-        let server_error = ServerError::new(
-            "HTTP/1.1 500 Server Error".to_string(),
-            ContentyType::ApplicationJSON.as_str(),
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-            server_error_msg.as_bytes().len(),
-            server_error_msg,
-        );
-
+        let server_error = error_req("server error".to_string(),server_error_msg);
+        
         let conflict_msg = error_msg(
             "User Conflict".to_string(),
             "User Alread Exists.Try new one".to_string(),
         );
 
-        let user_conflict = ConflictError::new(
-            "HTTP/1.1 404 Server Error".to_string(),
-            ContentyType::ApplicationJSON.as_str(),
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-            conflict_msg.as_bytes().len(),
-            conflict_msg,
-        );
+        let user_conflict = error_req("user conflict".to_string(), conflict_msg);
 
         if missign_fields_status.1 == true {
-            return Err(HttpErrors::NotFound(not_found.msg()));
+            return Err(bad_req);
         }
 
         let mut users = match users_data("register.json") {
             Ok(users) => users,
             Err(_) => {
-                return Err(HttpErrors::ServerError(server_error.msg()));
+                return Err(server_error);
             }
         };
         let new_user = User {
@@ -110,12 +81,11 @@ pub mod register {
             password,
         };
 
-        println!("{:?}", users);
 
         let is_user_already_exists = alread_exists(&new_user, &users);
 
         if is_user_already_exists == true {
-            return Err(HttpErrors::ConflictError(user_conflict.msg()));
+            return Err(user_conflict);
         }
 
         users.push(new_user.clone());
@@ -124,32 +94,11 @@ pub mod register {
 
         let _ = fs::write("register.json", users_str);
 
-        let content = match serde_json::to_string(&new_user) {
-            Ok(d) => d,
-            Err(_) => "".to_string(),
-        };
+        let content = new_user.get_user_info();
 
-        let body = Body {
-            success: true,
-            message: "Registration Successfull".to_string(),
-            data: new_user.get_user_info(),
-        };
+        let response = response_with_current_context(content, "Registration Successfull".to_string());
 
-        let status_msg = StatusLine::new("HTTP/1.1".to_string(), 200, StatusMessage::Ok);
-
-        let response_header_line = ResponseHeaderLines::new(
-            "Close".to_string(),
-            Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-            body.message().as_bytes().len(),
-            "application/json".to_string(),
-        );
-
-        let response = Response::new(status_msg, response_header_line, "", body.message());
-
-        // println!("{}",response.message());
-
-        // println!("{:?}",users);
-
-        Ok(response.message())
+        
+        Ok(response)
     }
 }
