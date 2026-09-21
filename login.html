@@ -228,13 +228,13 @@
   </header>
 
   <div class="wrap">
-    <form class="card" novalidate>
+    <form class="card" novalidate method="POST" action="/login">
       <h1>Welcome back</h1>
       <p>Log in to pick up where your list left off.</p>
 
       <div class="field">
-        <label for="identifier">Name or email</label>
-        <input type="text" id="identifier" name="identifier" placeholder="Jordan Rivers or you@example.com" autocomplete="username" required>
+        <label for="name_or_email">Name or email</label>
+        <input type="text" id="name_or_email" name="name_or_email" placeholder="Jordan Rivers or you@example.com" autocomplete="username" required>
       </div>
 
       <div class="field">

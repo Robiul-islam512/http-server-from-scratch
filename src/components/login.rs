@@ -49,21 +49,26 @@ use serde::Serialize;
         let name_or_email = get_email_or_name(data_map);
         let password = get_map_value(data_map, "password");
 
-        let might_missing:Vec<(&str, &str)> = vec![(name_or_email.0,&name_or_email.1),("password",&password)]; 
-        let missing_fields = missing_fields(might_missing);
+        println!("{:?}",data_map);
 
-        let msg = missing_fields.0;
+        let missing_count = [&name_or_email,&password].iter().filter(|f|f.is_empty()).count();
+
+        let msg = if missing_count>1{
+            "Login fields are missing.".to_string()
+        }else{
+            "Login field is missing".to_string()
+        };
 
         let bad_req = error_req("bad req".to_string(), msg.clone());
 
-        if missing_fields.1 == true{
+        if name_or_email.is_empty() || password.is_empty(){
             return Err(
                 bad_req
             );
         }
 
         let user_login_info = Login{
-            name_or_email:name_or_email.1.clone(),
+            name_or_email:name_or_email.clone(),
             password:password.clone()
         };  
 
@@ -91,7 +96,6 @@ use serde::Serialize;
             return Err(not_found);
         }
 
-        
 
         let user_showing_data = match serde_json::to_string(&login_status.0){
             Ok(user)=>user,
@@ -188,13 +192,32 @@ use serde::Serialize;
         (empty,is_valid_user)
     }
 
-    pub fn get_email_or_name<'a>(data_map:&HashMap<String,String>)->(&'a str,String){
-        if data_map.contains_key("name"){
-            ("name",get_map_value(data_map, "name"))
+    pub fn get_email_or_name<'a>(data_map:&HashMap<String,String>)->String{
+        let name_or_email = (get_map_value(data_map, "name"),get_map_value(data_map, "email"),get_map_value(data_map,"name_or_email"));
+
+
+        if name_or_email.0.contains("@") {
+            return name_or_email.0;
+        }
+        else if name_or_email.1.contains("@"){
+            return name_or_email.1;
+        }
+        else if name_or_email.2.contains("@"){
+            return name_or_email.2;
+        }
+        else if name_or_email.0.len()>1{
+            return name_or_email.0;
+        }
+        else if name_or_email.1.len()>1{
+            name_or_email.1
+        }
+        else if name_or_email.2.len()>1{
+            name_or_email.2
         }
         else{
-            ("email",get_map_value(data_map, "email"))
+            "".to_string()
         }
+
     }
 
     #[test]
