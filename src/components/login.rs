@@ -193,31 +193,17 @@ use serde::Serialize;
     }
 
     pub fn get_email_or_name<'a>(data_map:&HashMap<String,String>)->String{
-        let name_or_email = (get_map_value(data_map, "name"),get_map_value(data_map, "email"),get_map_value(data_map,"name_or_email"));
 
-
-        if name_or_email.0.contains("@") {
-            return name_or_email.0;
+        let name_or_email = vec![get_map_value(data_map, "name"),get_map_value(data_map, "email"),get_map_value(data_map,"name_or_email")];
+        for val in name_or_email{
+            if val.contains("@"){
+                return val;
+            }
+            else if val.len()>1{
+                return val;
+            }
         }
-        else if name_or_email.1.contains("@"){
-            return name_or_email.1;
-        }
-        else if name_or_email.2.contains("@"){
-            return name_or_email.2;
-        }
-        else if name_or_email.0.len()>1{
-            return name_or_email.0;
-        }
-        else if name_or_email.1.len()>1{
-            name_or_email.1
-        }
-        else if name_or_email.2.len()>1{
-            name_or_email.2
-        }
-        else{
-            "".to_string()
-        }
-
+        return "".to_string();
     }
 
     #[test]
