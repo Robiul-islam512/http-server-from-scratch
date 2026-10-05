@@ -5,6 +5,12 @@ pub mod bad_request{
     pub trait BadRequestFormat {
         fn msg(&self)->String;
     }
+  
+    #[derive(Serialize,Debug)]
+    pub struct ErrorBodyMessage{
+        pub error:String,
+        pub message:String,
+    }
 
     #[derive(Debug,Serialize)]
     pub struct ErrorMessage{

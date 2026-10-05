@@ -149,7 +149,7 @@ use serde::Serialize;
         );
 
         let server_req_format = ServerError::new(
-            "HTTP/1.1 500 Server Error".to_string(),
+            "HTTP/1.1 500 Internal Server Error".to_string(),
             ContentyType::ApplicationJSON.as_str(),
             Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
             msg.clone().as_bytes().len(),

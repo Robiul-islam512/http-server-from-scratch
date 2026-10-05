@@ -28,17 +28,6 @@ pub mod register {
         pub password:String,
     }
 
-    impl User {
-        pub fn get_user_info(&self)->String{
-           format!(
-            r#"{{"name":"{}","email":"{}"}}"#,
-            self.name,
-            self.email
-            )
-        }
-    }
-
-
     pub fn register<'a>(body: &HashMap<String, String>) -> std::result::Result<String, HttpErrors> {
         let name = get_map_value(body, "name");
         let email = get_map_value(body, "email");

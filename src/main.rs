@@ -1,16 +1,20 @@
-use std::collections::HashMap;
 use std::net::{TcpListener, TcpStream};
 use std::io::{self, BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
 
-use response::content_type::content_type::ContentyType;
-use request::request_error::request_error::HttpError;
 use request::request::request::request;
-use request::data_decoding::data_decoding::data_extraction;
-// use request::router::router::{get_router,post_router};
-use router::get::get_request::{get_route_file_path,get
+use router::get::get_request::{
+    get_route_file_path,
+    get
 };
+
 use router::post::post_request::post;
+
+use errors::errors::errors::HttpErrors;
+use components::login::login::error_req;
+
+use parsing::parsing::parsing::parsing;
+
 
 
 mod request;
@@ -18,6 +22,7 @@ mod response;
 mod errors;
 mod router;
 mod components;
+mod parsing;
 
 fn main()->Result<()>{
     let litstener = TcpListener::bind("127.0.0.1:8080")?;
@@ -46,6 +51,8 @@ fn main()->Result<()>{
 
         let buffer = buffer_val.0;
         let bytes = buffer_val.1;
+
+        parsing(buffer,bytes);
 
         let data_info = request(buffer, bytes);
 
@@ -83,7 +90,7 @@ fn main()->Result<()>{
                     println!("response: {}",res); 
                     
                     
-                    stream.write_all(res.as_bytes());
+                    let _ = stream.write_all(res.as_bytes());
                     
                     
                 },
@@ -104,11 +111,12 @@ fn main()->Result<()>{
 }
 
 
-pub fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpError>{
+pub fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpErrors>{
+    let er = error_req("server error".to_string(), "Internal server error".to_string());
     match stream {
         Ok(strm)=>Ok(strm),
-        Err(e)=>{
-            return Err(HttpError::ServerError(e.to_string()));
+        Err(_)=>{
+            return Err(er);
         }
     }
 }
