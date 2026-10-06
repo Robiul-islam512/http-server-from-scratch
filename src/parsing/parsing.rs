@@ -1,10 +1,30 @@
 pub mod parsing{
 
-    use crate::parsing::{
-        headers::headers::extract_request_headers,
-        request_line::request_line::extract_request_line,
+    use std::collections::HashMap;
+
+use crate::parsing::{
+        headers::headers::{extract_request_headers},
+        request_line::request_line::{extract_request_line,RequestLine},
     };
-    pub fn parsing(buffer:[u8;4096],bytes_size:usize){
+
+    use crate::request::data_purified::data_purified::organized_data;
+
+    use crate::parsing::body::body::extract_body;
+
+    #[derive(Debug)]
+    pub struct Request{
+        pub request_line:RequestLine,
+        pub request_headers:HashMap<String,String>,
+        pub body:Option<HashMap<String,String>>,
+    }
+
+    impl Request {
+        pub fn new(request_line:RequestLine,request_headers:HashMap<String,String>,body:Option<HashMap<String,String>>)->Self{
+            Self { request_line, request_headers, body }    
+        }
+    }
+
+    pub fn parsing(buffer:[u8;4096],bytes_size:usize)->Request{
         
         let mut request_line = String::new();
         let mut request_end = 0;
@@ -18,7 +38,7 @@ pub mod parsing{
             request_line.push(ch);
         }   
 
-        let line:Vec<&str> = request_line.split_whitespace().collect();
+        let line:Vec<String> = request_line.split_whitespace().map(|val|val.to_string()).collect();
 
         let mut headers = String::new();
 
@@ -36,15 +56,25 @@ pub mod parsing{
 
         let request_line =  extract_request_line(line);
         let headers = extract_request_headers(headers);
+    
+        let is_post_request = request_line.method == "POST".to_string();
+
+        if is_post_request{
+
+            let body = extract_body(buffer,request_end,&headers);
+
+            return Request { request_line, request_headers: headers, body };
+        }
         
+        return Request { request_line, request_headers: headers, body: None };
+
     }
 
 
-
-    pub fn handle_option<'a>(val:Option<&&'a str>)->&'a str{
+    pub fn handle_option(val:Option<&String>)->String{
         match val {
-            Some(v)=>v,
-            None=>""
+            Some(v)=>v.to_string(),
+            None=>"".to_string()
         }
     }
 

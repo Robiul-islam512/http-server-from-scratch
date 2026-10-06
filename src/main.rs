@@ -52,7 +52,9 @@ fn main()->Result<()>{
         let buffer = buffer_val.0;
         let bytes = buffer_val.1;
 
-        parsing(buffer,bytes);
+        let request_parse =  parsing(buffer,bytes);
+
+        println!("{:?}",request_parse);
 
         let data_info = request(buffer, bytes);
 

@@ -4,7 +4,7 @@ pub mod  request_line{
 
     #[derive(Debug,PartialEq)]
     pub struct RequestLine{
-        method:String,
+        pub method:String,
         path:String,
         query_params:HashMap<String,String>,
         http_version:String,
@@ -16,7 +16,9 @@ pub mod  request_line{
         }
     }
 
-     pub fn extract_request_line<'a>(request_line:Vec<&'a str>)->RequestLine{
+     pub fn extract_request_line(request_line:Vec<String>)->RequestLine{
+
+        let x = request_line.get(0);
 
         let method = handle_option(request_line.get(0));
         let route_path = handle_option(request_line.get(1));
@@ -24,7 +26,7 @@ pub mod  request_line{
 
         println!("{:?}",request_line);
 
-        let route_nd_params = extract_route_nd_params(route_path);
+        let route_nd_params = extract_route_nd_params(&route_path);
 
 
         let route = route_nd_params.0;
@@ -113,8 +115,8 @@ mod tests{
 
     #[test]
     fn tests(){
-        let line1 = vec!["GET", "/users/42?sort=asc&page=2", "HTTP/1.1"];
-        let line2= vec!["POST","/users/login.html","HTTP/1.1"];
+        let line1 = vec!["GET".to_string(), "/users/42?sort=asc&page=2".to_string(), "HTTP/1.1".to_string()];
+        let line2= vec!["POST".to_string(),"/users/login.html".to_string(),"HTTP/1.1".to_string()];
 
         let request_line_test_with_params = extract_request_line(line1);
 
