@@ -1,6 +1,6 @@
 pub mod parsing{
 
-    use std::collections::HashMap;
+    use std::{collections::HashMap, str::from_utf8};
 
     use crate::parsing::{
         headers::headers::{extract_request_headers},
@@ -43,7 +43,7 @@ pub mod parsing{
         for i in request_end..bytes_size{
             let val = buffer[i] as char;
 
-            if val != '{'{
+            if val != '{' {
                  headers.push(val);
             }
             else{
@@ -52,6 +52,15 @@ pub mod parsing{
             }
         }
 
+        let headers = String::from_utf8_lossy(&buffer).to_string();
+
+
+
+        let request_headers_end = match headers.find("\r\n\r\n"){
+            Some(u)=>u+4,
+            None=>0
+        };
+
         let request_line =  extract_request_line(line);
         let headers = extract_request_headers(headers);
     
@@ -59,7 +68,7 @@ pub mod parsing{
 
         if is_post_request{
 
-            let body = extract_body(buffer,request_end,&headers);
+            let body = extract_body(buffer,request_headers_end,&headers);
 
             return Request { request_line, request_headers: headers, body };
         }

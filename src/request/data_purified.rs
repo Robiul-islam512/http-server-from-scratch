@@ -1,6 +1,7 @@
 pub mod data_purified{
     use std::collections::HashMap;
     use crate::request::data_decoding::data_decoding::data_decoding;
+    use crate::parsing::parsing::parsing::handle_option;
 
     pub fn organized_data<'a>(content_type:&'a str,u8_data:Option<&[u8]>)->Option<HashMap<String,String>>{
         let mut map_data:HashMap<String,String> = HashMap::new(); 
@@ -13,8 +14,18 @@ pub mod data_purified{
 
         let data = data_decoding(&data);
 
+        let mut contnt_type = String::new();
         
-        if content_type =="multipart/form-data" || content_type =="application/x-www-form-urlencoded" {
+        if content_type.contains("multipart/form-data"){
+            let sem_col = match content_type.find(";"){
+                Some(i)=>i,
+                None=>0
+            };
+
+            contnt_type = content_type[0..sem_col].to_string();
+        }
+
+        if  content_type =="application/x-www-form-urlencoded" {
             let data_chars:Vec<char> = data.chars().collect();
             
             let mut split_vec = Vec::new(); 
@@ -54,7 +65,45 @@ pub mod data_purified{
 
             }
         }
+        if contnt_type == "multipart/form-data"{
+            println!("{}",data);
 
+            let mut multipart_form = Vec::new();
+
+            let mut cnt = 1;
+            for data_line in data.lines(){
+                cnt+=1;
+                if cnt%2==1{
+                    let mut key = String::new();
+                    if data_line.contains("name"){
+                         let find_name_i = match data_line.find("name") {
+                            Some(i)=>i+6,
+                            None=>0
+                        };
+                        
+                        key = match data_line.get(find_name_i..){
+                            Some(k)=>k[..k.len()-1].to_string(),
+                            None=>"".to_string()
+                        };
+                        multipart_form.push(key);
+                    }
+                    else{
+                        multipart_form.push(data_line.to_string());
+                    }
+                }
+            }
+
+            let mut k_i = 0;
+            let mut v_i = 1;
+
+            while v_i<multipart_form.len() {
+                let key = handle_option( multipart_form.get(k_i));
+                let val = handle_option(multipart_form.get(v_i));
+                map_data.insert(key, val);
+                k_i+=1;
+                v_i+=1;
+            }
+        }
         if content_type == "application/json"{
 
             let mut d = String::new();
@@ -111,6 +160,8 @@ pub mod data_purified{
             None=>"".to_string(),
         }
     }
+
+    // pub fn handle_option()
 
     #[test]
     fn test_organized_data_fn(){

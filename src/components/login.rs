@@ -48,7 +48,9 @@ use serde::Serialize;
         let name_or_email = get_email_or_name(data_map);
         let password = get_map_value(data_map, "password");
 
-        println!("{:?}",data_map);
+        println!("name {} {}",name_or_email,password);
+
+        println!("data {:?}",data_map);
 
         let missing_count = [&name_or_email,&password].iter().filter(|f|f.is_empty()).count();
 

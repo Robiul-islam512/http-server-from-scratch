@@ -56,7 +56,11 @@ fn main()->Result<()>{
 
         let request_parse =  parsing(buffer,bytes);
 
+        println!("{:?}",request_parse);
+
         let method = request_parse.request_line.method;
+
+        
 
         match method.as_str() {
             "GET"=>{
