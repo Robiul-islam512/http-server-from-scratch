@@ -2,12 +2,10 @@ pub mod parsing{
 
     use std::collections::HashMap;
 
-use crate::parsing::{
+    use crate::parsing::{
         headers::headers::{extract_request_headers},
         request_line::request_line::{extract_request_line,RequestLine},
     };
-
-    use crate::request::data_purified::data_purified::organized_data;
 
     use crate::parsing::body::body::extract_body;
 

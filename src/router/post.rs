@@ -2,41 +2,24 @@ pub mod post_request{
     use std::collections::HashMap;
     use std::fs;
     
-
-    use crate::request::request_headers::request_header::RequestHeaders;
     use crate::router::get::get_request::get_route_file_path;
-    use crate::request::data_purified::data_purified::organized_data;
     use crate::errors::{
         errors::errors::HttpErrors,
         bad_request400::bad_request::ErrorBodyMessage,
     };
-    use crate::request::request::request::{data_fetch,header_lines,requeste_content_type,body_starting_index};
-    // use crate::router:
     use crate::components::{
         register::register::{register,User},
         login::login::login,
     };
 
-
     
-    pub fn post<'a>(data_map:&HashMap<String,String>,buffer:[u8;4096],bytes:usize)->std::result::Result<String,HttpErrors>{
+    pub fn post<'a>(url_path:String,body:HashMap<String,String>,params:HashMap<String,String>)->std::result::Result<String,HttpErrors>{
         
-        let url_path = url_path(data_map);
+        let url_path = url_path;
         
         let url = get_route_file_path(&url_path);
 
-        let data = data_fetch(buffer, bytes);
-        let header_lines = header_lines(&data.1);
-
-        let header_lines = RequestHeaders::new(header_lines);
-        let content_type = requeste_content_type(&header_lines);
-
-        let body_starting_ind = body_starting_index(&data.0,bytes);
-
-        let org_map_data = match organized_data(&content_type, buffer.get(body_starting_ind..)){
-            Some(data)=>data,
-            None=>HashMap::new()
-        };
+        let org_map_data = body;
 
         if  url.to_lowercase() == "register.html".to_string(){
             return register(&org_map_data);
@@ -119,19 +102,4 @@ pub mod post_request{
             None=>"".to_string(),
         }
     }
-
-    #[test]
-    fn post_req_test(){
-        let testing_map = HashMap::from([
-            ("name".to_string(),"gsdsd".to_string()),
-            ("email".to_string(),"robiul&gamil.com".to_string()),
-            ("password".to_string(),"".to_string()),
-        ]);
-
-        let x =  register(&testing_map);
-
-        println!("{:?}",x);
-
-    }
-
 }

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::net::{TcpListener, TcpStream};
 use std::io::{self, BufRead, BufReader, Read, Result, Write};
 use std::fs::{File};
@@ -13,7 +14,8 @@ use router::post::post_request::post;
 use errors::errors::errors::HttpErrors;
 use components::login::login::error_req;
 
-use parsing::parsing::parsing::parsing;
+use parsing::parsing::parsing::{parsing,Request};
+// use parsing::parsing::parsing
 
 
 
@@ -54,34 +56,37 @@ fn main()->Result<()>{
 
         let request_parse =  parsing(buffer,bytes);
 
-        println!("{:?}",request_parse);
+        let method = request_parse.request_line.method;
 
-        let data_info = request(buffer, bytes);
+        match method.as_str() {
+            "GET"=>{
+                let route_path = request_parse.request_line.path;
+                let query_params = if !request_parse.request_line.query_params.is_empty(){
+                    request_parse.request_line.query_params
+                }else{
+                    HashMap::new()
+                };
 
-        match data_info {
-            Ok(data)=>match data.get("method").map(|v| v.as_str()){
-                Some("GET")=>{
-                    
-                    let url_path = match data.get("url"){
-                        Some(path)=>path.to_string(),
-                        None=>"/".to_string(),
-                    };
+                let file_path = get_route_file_path(&route_path);
 
-                    let file_path = get_route_file_path(&url_path);
-
-                    let content = match file(&file_path){
+                let content = match file(&file_path){
                         Ok(cnt) =>cnt,
                         Err(_)=>{
                             "<h1>Invalid Path</h1>".to_string()
                         }
                     };
 
-                    let _ = stream.write_all(get(&content).as_bytes());
-                    
-                },
-                Some("POST")=>{
+                let _ = stream.write_all(get(&content).as_bytes());
+            },
+            "POST"=>{
+                let url = request_parse.request_line.path;
+                let params = request_parse.request_line.query_params;
+                let body = match request_parse.body {
+                    Some(body)=>body,
+                    None=>HashMap::new()
+                };
 
-                    let res = match post(&data, buffer, bytes){
+                let res = match post(url,body,params){
                         Ok(res)=>res,
                         Err(e)=>{
                             eprintln!("{}",e);
@@ -90,27 +95,18 @@ fn main()->Result<()>{
                     };
 
                     println!("response: {}",res); 
-                    
-                    
                     let _ = stream.write_all(res.as_bytes());
-                    
-                    
-                },
-                _=>{
-                    eprintln!("Does not match with any method");
-                }
             },
-            Err(e)=>{
-                let message = e.to_string();
-                let _ = write(&mut stream, message);
+            _=>{
+                
             }
-
-        }
+        }      
 
     }
     
     Ok(())
 }
+
 
 
 pub fn tcp_stream(stream:io::Result<TcpStream>)->std::result::Result<TcpStream,HttpErrors>{

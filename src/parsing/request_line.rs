@@ -5,9 +5,9 @@ pub mod  request_line{
     #[derive(Debug,PartialEq)]
     pub struct RequestLine{
         pub method:String,
-        path:String,
-        query_params:HashMap<String,String>,
-        http_version:String,
+        pub path:String,
+        pub query_params:HashMap<String,String>,
+        pub http_version:String,
     }
 
     impl RequestLine {
@@ -17,8 +17,6 @@ pub mod  request_line{
     }
 
      pub fn extract_request_line(request_line:Vec<String>)->RequestLine{
-
-        let x = request_line.get(0);
 
         let method = handle_option(request_line.get(0));
         let route_path = handle_option(request_line.get(1));
